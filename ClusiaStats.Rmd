@@ -1,10 +1,412 @@
 ---
 title: "R Notebook"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
+    df_print: paged
+    code_folding: hide
+    toc: true
+    toc_float: true
 ---
 
 # Introduction
 # Methods
-# Malic Acid Titrations
+# Biomass Measurements
+# Physiology Measurements
+##  Malic Acid Titrations
+```{r Importing Malic Acid Data}
+library(tidyverse)
+clusia.malic <- read.csv("~/Documents/LabStats/Clusia/MalicAcid.csv", header = TRUE , sep = ",", stringsAsFactors = TRUE, na.strings = "na")
+```
+
+### Malic Acid Controls
+```{r Malic Acid Controls}
+# Week 0
+wk0.controls <- clusia.malic %>% 
+  filter(Treatment == "Control" | Treatment == "Control Mock") %>% 
+  filter(Week == "Wk_0") %>% 
+  arrange(Condition, Treatment)
+
+malic.control0.aov <- aov(MalicAverage ~ Condition * Treatment, data = wk0.controls)
+summary(malic.control0.aov) # not sigificant between autoclaved and inoculated controls
+
+# Week 2
+wk2.controls <- clusia.malic %>% 
+  filter(Treatment == "Control" | Treatment == "Control Mock") %>% 
+  filter(Week == "Wk_2") %>% 
+  arrange(Condition, Treatment)
+
+malic.control2.aov <- aov(MalicAverage ~ Condition * Treatment, data = wk2.controls)
+summary(malic.control2.aov) # not sigificant between autoclaved and inoculated controls
+
+# Week 4
+wk4.controls <- clusia.malic %>% 
+  filter(Treatment == "Control" | Treatment == "Control Mock") %>% 
+  filter(Week == "Wk_4") %>% 
+  arrange(Condition, Treatment)
+
+malic.control4.aov <- aov(MalicAverage ~ Condition * Treatment, data = wk4.controls)
+summary(malic.control4.aov) # not sigificant between autoclaved and inoculated controls
+
+# Week 6
+wk6.controls <- clusia.malic %>% 
+  filter(Treatment == "Control" | Treatment == "Control Mock") %>% 
+  filter(Week == "Wk_6") %>% 
+  arrange(Condition, Treatment)
+
+malic.control6.aov <- aov(MalicAverage ~ Condition * Treatment, data = wk6.controls)
+summary(malic.control6.aov) # not sigificant between autoclaved and inoculated controls
+
+# Week 8
+wk8.controls <- clusia.malic %>% 
+  filter(Treatment == "Control" | Treatment == "Control Mock") %>% 
+  filter(Week == "Wk_8") %>% 
+  arrange(Condition, Treatment)
+
+malic.control8.aov <- aov(MalicAverage ~ Condition * Treatment, data = wk8.controls)
+summary(malic.control8.aov) # not sigificant between autoclaved and inoculated controls
+
+# removing Control Mock & fixing 'Null isolates'
+clusia.malic <- clusia.malic %>% 
+  filter(Treatment != "Control Mock")
+
+clusia.malic$Treatment[clusia.malic$Treatment == "Null Isolates"] <- "Nonfunctional Isolates"
+clusia.malic$Treatment[clusia.malic$Treatment == "Null_Isolates"] <- "Nonfunctional Isolates"
+clusia.malic$Treatment[clusia.malic$Treatment == "All_Isolates"] <- "All Isolates"
+clusia.malic$Treatment[clusia.malic$Treatment == "Drought_Isolates"] <- "Drought Isolates"
+clusia.malic$Treatment[clusia.malic$Treatment == "Phosphorus_Isolates"] <- "Phosphorus Isolates"
+
+# arranging by Week, Water, and Treatment
+clusia.malic <- clusia.malic %>% 
+  arrange(Week, Condition, Treatment)
+```
+
+### Malic Acid Summary Stats
+```{r Summary Statistics - Malic Acid}
+malic.sum <- clusia.malic %>% 
+  group_by(Week, Condition, Treatment) %>% 
+  summarise(n = n(),
+            mean_malic = mean(MalicAverage, na.rm = TRUE),
+            sd_malic = sd(MalicAverage, na.rm = TRUE),
+            se = sd(MalicAverage, na.rm = TRUE)/sqrt(n()))
+View(malic.sum)
+```
+
+### Malic Acid ANOVAs
+```{r Malic Acid ANOVAs}
+# Week 0
+malic.wk0 <- clusia.malic %>% 
+  filter(Week == "Wk_0")
+
+malic.wk0.aov <- aov(MalicAverage ~ Condition * Treatment, data = malic.wk0)
+summary(malic.wk0.aov) # not sigificant between treatment
+
+# Week 2
+malic.wk2 <- clusia.malic %>% 
+  filter(Week == "Wk_2")
+
+malic.wk2.aov <- aov(MalicAverage ~ Condition * Treatment, data = malic.wk2)
+summary(malic.wk2.aov) # significant drought effect
+
+# Week 4
+malic.wk4 <- clusia.malic %>% 
+  filter(Week == "Wk_4")
+
+malic.wk4.aov <- aov(MalicAverage ~ Condition * Treatment, data = malic.wk4)
+summary(malic.wk4.aov) # sigificant drought effect
+
+# Week 6
+malic.wk6 <- clusia.malic %>% 
+  filter(Week == "Wk_6")
+
+malic.wk6.aov <- aov(MalicAverage ~ Condition * Treatment, data = malic.wk6)
+summary(malic.wk6.aov) # sigificant drought effect
+
+# Week 8
+malic.wk8 <- clusia.malic %>% 
+  filter(Week == "Wk_8")
+
+malic.wk8.aov <- aov(MalicAverage ~ Condition * Treatment, data = malic.wk8)
+summary(malic.wk8.aov) # significant drought effect and microbial effect
+
+TukeyHSD(malic.wk8.aov)
+```
 
 
+```{r Malic Acid Boxplot}
+clusia.boxplot <- ggplot(data = clusia.malic, aes(x = Treatment, y = MalicAverage, fill = Condition)) + geom_boxplot() + geom_point(aes(fill = Condition), size = 2, shape = 21, position = position_jitterdodge()) + facet_grid(. ~ Week) 
+
+clusia.boxplot <- clusia.boxplot + theme_bw() +scale_fill_manual(values=c("indianred3", "cadetblue3"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + theme(axis.title.x = element_blank()) + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) + theme(legend.position = c(0.095, 0.9))
+
+clusia.boxplot <- clusia.boxplot + ylab(expression(Malic~Acid~Concentration~(mu~mol~H~g^{-1})))
+
+pdf("MalicAcid_Boxplot.pdf")
+plot(clusia.boxplot)
+dev.off()
+```
+
+At Week 0, both well-watered and drought plants show no difference in malic acid concentrations as expected. However, as the drought trial progresses, well-watered plants and drought plants begin to diverge significantly at Week 2 (p-value < 0.001). Higher amounts of malic acid in well-watered plants indicate higher CAM activity, which is in contrast with hypotheses that CAM activity would be highest in drought plants due to experiencing drought stress. Furthermore, there was no significant effect of microbial community until the last week (p- value < 0.05) with no interaction term, suggesting that availability of water is still the dominant driver of malic acid concentration. Tukeys HSD results indicate that although the differences in microbial communities are different, that these differences are occuring between well-watered microbial communities versus droughted microbial communities, verifying that the water availability is driving differences between plants and not the composition of the the microbial communities themselves. 
+
+## Lipid Peroxidation Assay
+```{r Importing Lipid Peroxidation Data}
+clusia.lipid <- read.csv("~/Documents/Git/clusia_droughtexperiment/LipidPeroxidation.csv", header = TRUE , sep = ",", stringsAsFactors = TRUE, na.strings = "na")
+```
+### Lipid Peroxidation Controls
+```{r Lipid Peroxidation Controls}
+# Week 0
+wk0.controls <- clusia.lipid %>% 
+  filter(Treatment == "Control" | Treatment == "Control Mock") %>% 
+  filter(Week == "Wk_0") %>% 
+  arrange(Condition, Treatment)
+
+lipid.control0.aov <- aov(LipidPerox ~ Condition * Treatment, data = wk0.controls)
+summary(lipid.control0.aov) # not sigificant between autoclaved and inoculated controls
+
+
+# Week 2
+wk2.controls <- clusia.lipid %>% 
+  filter(Treatment == "Control" | Treatment == "Control Mock") %>% 
+  filter(Week == "Wk_2") %>% 
+  arrange(Condition, Treatment)
+
+lipid.control2.aov <- aov(LipidPerox ~ Condition * Treatment, data = wk2.controls)
+summary(lipid.control2.aov) # not sigificant between autoclaved and inoculated controls
+
+# Week 4
+wk4.controls <- clusia.lipid %>% 
+  filter(Treatment == "Control" | Treatment == "Control Mock") %>% 
+  filter(Week == "Wk_4") %>% 
+  arrange(Condition, Treatment)
+
+lipid.control4.aov <- aov(LipidPerox ~ Condition * Treatment, data = wk4.controls)
+summary(lipid.control4.aov) # not sigificant between autoclaved and inoculated controls
+
+# Week 6
+wk6.controls <- clusia.lipid %>% 
+  filter(Treatment == "Control" | Treatment == "Control Mock") %>% 
+  filter(Week == "Wk_6") %>% 
+  arrange(Condition, Treatment)
+
+lipid.control6.aov <- aov(LipidPerox ~ Condition * Treatment, data = wk6.controls)
+summary(lipid.control6.aov) # not sigificant between autoclaved and inoculated controls
+
+# Week 8
+wk8.controls <- clusia.lipid %>% 
+  filter(Treatment == "Control" | Treatment == "Control Mock") %>% 
+  filter(Week == "Wk_8") %>% 
+  arrange(Condition, Treatment)
+
+lipid.control8.aov <- aov(LipidPerox ~ Condition * Treatment, data = wk8.controls)
+summary(lipid.control8.aov) # not sigificant between autoclaved and inoculated controls
+
+# removing Control Mock
+clusia.lipid <- clusia.lipid %>% 
+  filter(Treatment != "Control Mock")
+View(clusia.lipid)
+
+# arranging by Week, Water, and Treatment
+clusia.lipid <- clusia.lipid %>% 
+  arrange(Week, Condition, Treatment)
+```
+
+### Lipid Peroxidation Summary Stats
+```{r Lipid Summary}
+lipid.sum <- clusia.lipid %>% 
+  group_by(Week, Condition, Treatment) %>% 
+  summarise(n = n(),
+            mean_lipid = mean(LipidPerox, na.rm = TRUE),
+            sd_lipid = sd(LipidPerox, na.rm = TRUE),
+            se = sd(LipidPerox, na.rm = TRUE)/sqrt(n()))
+View(lipid.sum)
+
+lipid.errobars <- ggplot(data = lipid.sum, aes(x = Treatment, y = mean_lipid, fill = Condition)) + geom_bar(stat = "identity", color = "black", position = position_dodge(0.9)) + geom_errorbar(aes(ymin = mean_lipid-sd_lipid, ymax = mean_lipid+sd_lipid), width = 0.2, position = position_dodge(0.9)) + facet_grid(. ~ Week)
+
+lipid.errobars <- lipid.errobars + theme_bw() + scale_fill_manual(values=c("indianred3", "cadetblue3"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + theme(axis.title.x = element_blank()) + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) + theme(legend.position = c(0.1, 0.8)) + ylab(expression(Mean~Lipid~Peroxidation~(nmol~MDA~g^{-1})))
+
+lipid.errobars
+```
+
+### Lipid Peroxidation ANOVAs
+```{r Weekly Lipid ANOVAs}
+# Week 0
+lipid.wk0 <- clusia.lipid %>% 
+  filter(Week == "Wk_0")
+
+lipid.wk0.aov <- aov(LipidPerox ~ Condition * Treatment, data = lipid.wk0)
+summary(lipid.wk0.aov) 
+
+# Week 2
+lipid.wk2 <- clusia.lipid %>% 
+  filter(Week == "Wk_2")
+
+lipid.wk2.aov <- aov(LipidPerox ~ Condition * Treatment, data = lipid.wk2)
+summary(lipid.wk2.aov)
+
+# Week 4
+lipid.wk4 <- clusia.lipid %>% 
+  filter(Week == "Wk_4")
+
+lipid.wk4.aov <- aov(LipidPerox ~ Condition * Treatment, data = lipid.wk4)
+summary(lipid.wk4.aov) 
+
+# Week 6
+lipid.wk6 <- clusia.lipid %>% 
+  filter(Week == "Wk_6")
+
+lipid.wk6.aov <- aov(LipidPerox ~ Condition * Treatment, data = lipid.wk6)
+summary(lipid.wk6.aov)
+
+# Week 8
+lipid.wk8 <- clusia.lipid %>% 
+  filter(Week == "Wk_8")
+
+lipid.wk8.aov <- aov(LipidPerox ~ Condition * Treatment, data = lipid.wk8)
+summary(lipid.wk8.aov) # significant drought effect, significant microbial effect
+
+TukeyHSD(lipid.wk8.aov)
+```
+
+```{r Lipid Peroxidation Boxplot}
+lipid.boxplot <- ggplot(data = clusia.lipid, aes(x = Treatment, y = LipidPerox, fill = Condition)) + geom_boxplot() + geom_point(aes(fill = Condition), size = 2, shape = 21, position = position_jitterdodge()) + facet_grid(. ~ Week) 
+
+lipid.boxplot <- lipid.boxplot + theme_bw() +scale_fill_manual(values=c("indianred3", "cadetblue3"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + theme(axis.title.x = element_blank()) + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) + theme(legend.position = c(0.1, 0.8)) + ylab(expression(Lipid~Peroxidation~(nmol~MDA~g^{-1})))
+
+pdf("LipidPerox_Boxplot.pdf")
+plot(lipid.boxplot)
+dev.off()
+```
+
+Lipd peroxidation did not differ signifcantly between well-watered plants and drought plants until the final week of the experiment. Overall, plants inoculated with all beneficial isolates (All Isolates) differed from control plants (Control), plants that received autoclaved bacteria (Control Mock), and plants that received isolates with no measured function (Nonfunctional) (p-value < 0.05). The greatest differences in lipid peroxidation occured between well-watered plants and drought plants, indepent of microbial community. Although there is a significant microbial effect (p-value < 0.01), there is no interaction term suggesting that lipid peroxidation in drought conditions is not tied to microbial community composition despite the general differences between plants incolated with beneficial isolates and those of the control.  
+
+
+
+
+
+## Proline Assay
+```{r Importing Proline Data}
+clusia.proline <- read.csv("~/Documents/Git/clusia_droughtexperiment/Proline.csv", header = TRUE , sep = ",", stringsAsFactors = TRUE, na.strings = "na")
+```
+
+### Proline Controls
+```{r Proline Controls}
+# Week 0
+wk0.controls <- clusia.proline %>% 
+  filter(Treatment == "Control" | Treatment == "Control Mock") %>% 
+  filter(Week == "Wk_0") %>% 
+  arrange(Condition, Treatment)
+
+proline.control0.aov <- aov(Proline ~ Condition * Treatment, data = wk0.controls)
+summary(proline.control0.aov) # not sigificant between autoclaved and inoculated controls
+
+# Week 2
+wk2.controls <- clusia.proline %>% 
+  filter(Treatment == "Control" | Treatment == "Control Mock") %>% 
+  filter(Week == "Wk_2") %>% 
+  arrange(Condition, Treatment)
+
+proline.control2.aov <- aov(Proline ~ Condition * Treatment, data = wk2.controls)
+summary(proline.control2.aov) # not sigificant between autoclaved and inoculated controls
+
+# Week 4
+wk4.controls <- clusia.proline %>% 
+  filter(Treatment == "Control" | Treatment == "Control Mock") %>% 
+  filter(Week == "Wk_4") %>% 
+  arrange(Condition, Treatment)
+
+proline.control4.aov <- aov(Proline ~ Condition * Treatment, data = wk4.controls)
+summary(proline.control4.aov) # significant interaction term + significant at < 0.1 for drought and microbial effect
+
+# Week 6
+wk6.controls <- clusia.proline %>% 
+  filter(Treatment == "Control" | Treatment == "Control Mock") %>% 
+  filter(Week == "Wk_6") %>% 
+  arrange(Condition, Treatment)
+
+proline.control6.aov <- aov(Proline ~ Condition * Treatment, data = wk6.controls)
+summary(proline.control6.aov) # significant drought effect
+
+# Week 8
+wk8.controls <- clusia.proline %>% 
+  filter(Treatment == "Control" | Treatment == "Control Mock") %>% 
+  filter(Week == "Wk_8") %>% 
+  arrange(Condition, Treatment)
+proline.control8.aov <- aov(Proline ~ Condition * Treatment, data = wk8.controls)
+summary(proline.control8.aov) # significant drought effect
+
+# removing Control Mock & fixing 'Null isolates'
+clusia.lipid <- clusia.lipid %>% 
+  filter(Treatment != "Control Mock")
+
+# arranging by Week, Water, and Treatment
+clusia.lipid <- clusia.lipid %>% 
+  arrange(Week, Condition, Treatment)
+```
+### Proline Summary Stats
+```{r Summary Statistics - Proline}
+proline.sum <- clusia.proline %>% 
+  group_by(Week, Condition, Treatment) %>% 
+  summarise(n = n(),
+            mean_proline = mean(Proline, na.rm = TRUE),
+            sd_proline = sd(Proline, na.rm = TRUE),
+            se = sd(Proline, na.rm = TRUE)/sqrt(n()))
+View(proline.sum)
+
+proline.errobars <- ggplot(data = proline.sum, aes(x = Treatment, y = mean_proline, fill = Condition)) + geom_bar(stat = "identity", color = "black", position = position_dodge(0.9)) + geom_errorbar(aes(ymin = mean_proline-sd_proline, ymax = mean_proline+sd_proline), width = 0.2, position = position_dodge(0.9)) + facet_grid(. ~ Week)
+
+proline.errobars <- proline.errobars + theme_bw() + scale_fill_manual(values=c("indianred3", "cadetblue3"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + theme(axis.title.x = element_blank()) + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) + theme(legend.position = c(0.09, 0.85)) + ylab(expression(Mean~Proline~Concentration(mu~moles~g^{-1})))
+
+proline.errobars
+```
+
+### Proline ANOVAs
+```{r ANOVAs - Proline}
+# Week 0
+proline.wk0 <- clusia.proline %>% 
+  filter(Week == "Wk_0")
+
+proline.wk0.aov <- aov(Proline ~ Condition * Treatment, data = proline.wk0)
+summary(proline.wk0.aov) # no significance
+
+# Week 2
+proline.wk2 <- clusia.proline %>% 
+  filter(Week == "Wk_2")
+
+proline.wk2.aov <- aov(Proline ~ Condition * Treatment, data = proline.wk2)
+summary(proline.wk2.aov) # significant drought effect (<0.1) and interaction term (< 0.05)
+
+# Week 4
+proline.wk4 <- clusia.proline %>% 
+  filter(Week == "Wk_4")
+
+proline.wk4.aov <- aov(Proline ~ Condition * Treatment, data = proline.wk4)
+summary(proline.wk4.aov) # significant drought effect
+
+# Week 6
+proline.wk6 <- clusia.proline %>% 
+  filter(Week == "Wk_6")
+
+proline.wk6.aov <- aov(Proline ~ Condition * Treatment, data = proline.wk6)
+summary(proline.wk6.aov)  # significant drought effect (<0.001), microbial (<0.1), interaction (<0.1)
+TukeyHSD(proline.wk6.aov)
+
+# Week 8
+proline.wk8 <- clusia.proline %>% 
+  filter(Week == "Wk_8")
+
+proline.wk8.aov <- aov(Proline ~ Condition * Treatment, data = proline.wk8)
+summary(proline.wk8.aov) # significant drought effect (<0.001) and microbial effect (<0.1)
+```
+
+```{r Proline Boxplot}
+
+proline.boxplot <- ggplot(data = clusia.proline, aes(x = Treatment, y = Proline, fill = Condition)) + geom_boxplot() + geom_point(aes(fill = Condition), size = 2, shape = 21, position = position_jitterdodge()) + facet_grid(. ~ Week) 
+
+proline.boxplot <- proline.boxplot + theme_bw() +scale_fill_manual(values=c("indianred3", "cadetblue3"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + theme(axis.title.x = element_blank()) + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) + theme(legend.position = c(0.09, 0.85))
+
+pdf("Proline_Boxplot.pdf")
+plot(proline.boxplot)
+dev.off()
+
+```
+
+Water is predominantly the determinant of proline concentration, though not until Week 4. Unlike malic acid and lipid peroxidation, there is a slight influence of microbial community on proline in Week 6 and Week 8 (p-value < 0.1), though Tukeys HSD shows that these differences are the result of differences between well-watered communities and droughted communities. Therefore, the significant interaction term is not an indication that plants containing each constructed communities respond differently within the drought treatment. Well-watered plants have significantly lower amounts of proline than drought plants at Week 4 (p-value < 0.05), with the gap between the two widening over time. This is consistent with proline being a stress metabolite that increases in response to drought stress.
