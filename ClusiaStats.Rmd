@@ -10,7 +10,186 @@ output:
 
 # Introduction
 # Methods
+# Packages 
+```{r}
+library(tidyverse)
+library(plotrix)
+library(car)
+```
+
 # Biomass Measurements
+```{r Biomass Dataset}
+biomass <- read.csv("~/Documents/LabStats/Clusia/GrowthMeasurements.csv", header = TRUE, stringsAsFactors = TRUE, na.strings = "NA")
+biomass <- biomass %>% 
+  arrange(Condition, Treatment, SampleNumber)
+```
+
+## Controls
+```{r}
+controls <- biomass %>% 
+  filter(Treatment == "Control" | Treatment == "Control Mock")
+
+# pot weight
+potwt.control <- aov(PotWt ~ Condition * Treatment, data = controls)
+summary(potwt.control) # no difference between control and control mock 
+
+# leaf fresh weight
+leaf_fw.control <- aov(Leaf_FreshWt ~ Condition * Treatment, data = controls)
+summary(leaf_fw.control)  # no difference between control and control mock
+
+# soil water
+soilwater.control <- aov(SoilWater ~ Condition * Treatment, data = controls)
+summary(soilwater.control) # no difference between control and control mock 
+
+# total dry weight
+totaldrywt.control <- aov(Total_DryWt ~ Condition * Treatment, data = controls)
+summary(totaldrywt.control) # no difference between control and control mock 
+
+# root biomass
+rootbiomass.control <- aov(RootBiomass ~ Condition * Treatment, data = controls)
+summary(rootbiomass.control) # no difference between control and control mock 
+
+# root:shoot 
+rootshoot.control <- aov(RootShoot ~ Condition * Treatment, data = controls)
+summary(rootshoot.control) # slight interaction term, but negligible
+
+# RMF
+rmf.control <- aov(RMF ~ Condition * Treatment, data = controls)
+summary(rmf.control)
+
+# removing control mock
+biomass <- biomass %>%
+  filter(Treatment != "Control Mock")
+
+```
+
+
+## Summary Stats
+```{r}
+biomass.sum <- biomass %>% 
+  group_by(Condition) %>% 
+  summarise_at(c("PotWt", "Leaf_FreshWt", "SoilWater", "Total_DryWt", "RootBiomass", "RootShoot", "RMF"), funs(mean, sd, std.error))
+View(biomass.sum)
+
+biomass.sum2 <- biomass %>% 
+  group_by(Condition, Treatment) %>% 
+  summarise_at(c("PotWt", "Leaf_FreshWt", "SoilWater", "Total_DryWt", "RootBiomass", "RootShoot", "RMF"), funs(mean, sd, std.error))
+View(biomass.sum2)
+```
+
+
+## ANOVAs
+```{r}
+mytheme <- theme_bw() + theme(
+  panel.grid.major = element_blank(),
+  panel.grid = element_blank(),
+  axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1)
+)
+```
+
+### Leaf Fresh Weight
+```{r}
+leaf.aov <- aov(Leaf_FreshWt ~ Condition*Treatment, data = biomass)
+summary(leaf.aov) 
+
+# testing variance
+plot(leaf.aov, 1)
+leveneTest(Leaf_FreshWt ~ Condition*Treatment, data = biomass)
+
+# testing normality
+plot(leaf.aov, 2) 
+leaf.residuals <- residuals(object = leaf.aov)
+shapiro.test(x = leaf.residuals)
+
+ggplot(data = biomass, aes(x = Treatment, y = Leaf_FreshWt)) + geom_boxplot() + facet_grid(. ~ Condition) + scale_y_continuous(limits = c(0, 200)) + mytheme + ylab("Leaf Fresh Weight (g)")
+```
+
+### Soil Water
+```{r}
+soilwater.aov <- aov(SoilWater ~ Condition*Treatment, data = biomass)
+summary(soilwater.aov) 
+
+# homogeneity of variance
+plot(soilwater.aov, 1) 
+leveneTest(SoilWater ~ Condition*Treatment, data = biomass) 
+
+# testing normality
+plot(soilwater.aov, 2)
+water.residuals <- residuals(object = soilwater.aov)
+shapiro.test(x = water.residuals) 
+
+ggplot(data = biomass, aes(x = Treatment, y = SoilWater)) + geom_boxplot() + facet_grid(. ~ Condition) + mytheme
+```
+
+### Total Dry Weight
+```{r}
+totaldrywt.aov <- aov(Total_DryWt ~ Condition*Treatment, data = biomass)
+summary(totaldrywt.aov) 
+
+# homogeneity of variance
+plot(totaldrywt.aov, 1)
+leveneTest(Total_DryWt ~ Condition*Treatment, data = biomass) 
+
+# testing normality
+plot(totaldrywt.aov, 2)
+totaldrywt.residuals <- residuals(object = totaldrywt.aov)
+shapiro.test(x = totaldrywt.residuals) 
+
+ggplot(data = biomass, aes(x = Treatment, y = Total_DryWt)) + geom_boxplot() + facet_grid(. ~ Condition) + mytheme
+```
+
+### Root Biomass
+```{r}
+rootbiomass.aov <- aov(RootBiomass ~ Condition*Treatment, data = biomass)
+summary(rootbiomass.aov) 
+
+# homogeneity of variance
+plot(rootbiomass.aov, 1)
+leveneTest(RootBiomass ~ Condition*Treatment, data = biomass) 
+
+# normality test
+plot(rootbiomass.aov, 2)
+rootbiomass.residuals <- residuals(object = rootbiomass.aov)
+shapiro.test(x = rootbiomass.residuals)
+
+ggplot(data = biomass, aes(x = Treatment, y = RootBiomass)) + geom_boxplot() + facet_grid(. ~ Condition) + mytheme
+```
+
+### Root:Shoot
+```{r}
+rootshoot.aov <- aov(RootShoot ~ Condition*Treatment, data = biomass)
+summary(rootshoot.aov) 
+
+# homogeneity of variance
+plot(rootshoot.aov, 1) 
+leveneTest(RootShoot ~ Condition*Treatment, data = biomass)
+
+# normality test
+plot(rootshoot.aov, 2)
+rootshoot.residuals <- residuals(object = rootshoot.aov)
+shapiro.test(x = rootshoot.residuals) 
+
+ggplot(data = biomass, aes(x = Treatment, y = RootShoot)) + geom_boxplot() + facet_grid(. ~ Condition) + mytheme
+```
+
+### RMF
+```{r}
+rmf.aov <- aov(RMF~ Condition*Treatment, data = biomass)
+summary(rmf.aov) 
+
+# homogeneity of variance
+plot(rmf.aov, 1)
+leveneTest(RMF ~ Condition*Treatment, data = biomass) 
+
+# normality test
+plot(rmf.aov, 2)
+rmf.residuals <- residuals(object = rmf.aov)
+shapiro.test(x = rmf.residuals) 
+
+ggplot(data = biomass, aes(x = Treatment, y = RMF)) + geom_boxplot() + facet_grid(. ~ Condition) + mytheme + xlab("Isolate Community") + ylab("Root Mass Fraction")
+```
+Note: Root mass fraction = mass of fine root (g) / total biomass (g)
+
 # Physiology Measurements
 ##  Malic Acid Titrations
 ```{r Importing Malic Acid Data}
@@ -431,6 +610,7 @@ osmo <- read.csv("~/Documents/LabStats/Clusia/Osmolality.csv", header = TRUE, st
 osmo <- osmo %>% 
   arrange(Week, Condition, Treatment)
 ```
+
 
 ### Osmolality Controls
 ```{r Osmo Controls}
