@@ -22,6 +22,10 @@ library(car)
 biomass <- read.csv("~/Documents/LabStats/Clusia/GrowthMeasurements.csv", header = TRUE, stringsAsFactors = TRUE, na.strings = "NA")
 biomass <- biomass %>% 
   arrange(Condition, Treatment, SampleNumber)
+
+# removing control mock
+biomass <- biomass %>%
+  filter(Treatment != "Control Mock")
 ```
 
 ## Controls
@@ -57,10 +61,6 @@ summary(rootshoot.control) # slight interaction term, but negligible
 rmf.control <- aov(RMF ~ Condition * Treatment, data = controls)
 summary(rmf.control)
 
-# removing control mock
-biomass <- biomass %>%
-  filter(Treatment != "Control Mock")
-
 ```
 
 
@@ -77,17 +77,49 @@ biomass.sum2 <- biomass %>%
 View(biomass.sum2)
 ```
 
-
-## ANOVAs
+## Boxplots
+### Biomass 
 ```{r}
-mytheme <- theme_bw() + theme(
-  panel.grid.major = element_blank(),
-  panel.grid = element_blank(),
-  axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1)
-)
+mytheme <- theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+biomass.box <- ggplot(data = biomass, aes(x = Treatment, y = Total_DryWt, fill = Condition)) + geom_boxplot() + mytheme + scale_fill_manual(values=c("indianred3", "cadetblue3"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(legend.position = c(0.1, 0.85)) + ylab("Biomass (g DW)") + xlab("Constructed Community") + scale_x_discrete(limits = c("Control", "Nonfunctional Isolates", "Drought Isolates", "Phosphorus Isolates", "All Isolates"))
+
+pdf("Biomass.pdf")
+plot(biomass.box)
+dev.off()
 ```
 
-### Leaf Fresh Weight
+### Root biomass
+```{r}
+rootbiomass.box <- ggplot(data = biomass, aes(x = Treatment, y = RootBiomass, fill = Condition)) + geom_boxplot() + mytheme + scale_fill_manual(values=c("indianred3", "cadetblue3"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(legend.position = c(0.1, 0.85)) + ylab("Root Biomass (g DW)") + xlab("Constructed Community") + scale_x_discrete(limits = c("Control", "Nonfunctional Isolates", "Drought Isolates", "Phosphorus Isolates", "All Isolates"))
+
+pdf("RootBiomass_Boxplot.pdf")
+plot(rootbiomass.box)
+dev.off()
+```
+
+Possible trend in both total biomass and root biomass is that both Drought and Phosphorus communities have consistently higher means than the control, nonfunctional isolates, and all isolates plants. Although not statistically significant, they suggest that there may be an advantage to the plants to have specifically these specialized constructed communities during drought conditions. 
+
+### Root:Shoot
+```{r}
+rootshoot.box <- ggplot(data = biomass, aes(x = Treatment, y = RootShoot, fill = Condition)) + geom_boxplot() + mytheme + scale_fill_manual(values=c("indianred3", "cadetblue3"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(legend.position = c(0.1, 0.85)) + ylab("Root : Shoot") + xlab("Constructed Community") + scale_x_discrete(limits = c("Control", "Nonfunctional Isolates", "Drought Isolates", "Phosphorus Isolates", "All Isolates"))
+
+pdf("RootShoot_Boxplot.pdf")
+plot(rootshoot.box)
+dev.off()
+```
+
+### Root Mass Fraction
+```{r}
+rmf.box <- ggplot(data = biomass, aes(x = Treatment, y = RMF, fill = Condition)) + geom_boxplot() + mytheme + scale_fill_manual(values=c("indianred3", "cadetblue3"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(legend.position = c(0.1, 0.85)) + ylab("Root Mass Fraction") + xlab("Constructed Community") + scale_x_discrete(limits = c("Control", "Nonfunctional Isolates", "Drought Isolates", "Phosphorus Isolates", "All Isolates"))
+
+pdf("rmf_Boxplot.pdf")
+plot(rmf.box)
+dev.off()
+```
+
+# Biomass ANOVAs
+## Leaf Fresh Weight
 ```{r}
 leaf.aov <- aov(Leaf_FreshWt ~ Condition*Treatment, data = biomass)
 summary(leaf.aov) 
@@ -104,7 +136,7 @@ shapiro.test(x = leaf.residuals)
 ggplot(data = biomass, aes(x = Treatment, y = Leaf_FreshWt)) + geom_boxplot() + facet_grid(. ~ Condition) + scale_y_continuous(limits = c(0, 200)) + mytheme + ylab("Leaf Fresh Weight (g)")
 ```
 
-### Soil Water
+## Soil Water
 ```{r}
 soilwater.aov <- aov(SoilWater ~ Condition*Treatment, data = biomass)
 summary(soilwater.aov) 
@@ -121,7 +153,7 @@ shapiro.test(x = water.residuals)
 ggplot(data = biomass, aes(x = Treatment, y = SoilWater)) + geom_boxplot() + facet_grid(. ~ Condition) + mytheme
 ```
 
-### Total Dry Weight
+## Total Dry Weight
 ```{r}
 totaldrywt.aov <- aov(Total_DryWt ~ Condition*Treatment, data = biomass)
 summary(totaldrywt.aov) 
@@ -138,7 +170,7 @@ shapiro.test(x = totaldrywt.residuals)
 ggplot(data = biomass, aes(x = Treatment, y = Total_DryWt)) + geom_boxplot() + facet_grid(. ~ Condition) + mytheme
 ```
 
-### Root Biomass
+## Root Biomass
 ```{r}
 rootbiomass.aov <- aov(RootBiomass ~ Condition*Treatment, data = biomass)
 summary(rootbiomass.aov) 
@@ -155,7 +187,7 @@ shapiro.test(x = rootbiomass.residuals)
 ggplot(data = biomass, aes(x = Treatment, y = RootBiomass)) + geom_boxplot() + facet_grid(. ~ Condition) + mytheme
 ```
 
-### Root:Shoot
+## Root:Shoot
 ```{r}
 rootshoot.aov <- aov(RootShoot ~ Condition*Treatment, data = biomass)
 summary(rootshoot.aov) 
@@ -172,7 +204,7 @@ shapiro.test(x = rootshoot.residuals)
 ggplot(data = biomass, aes(x = Treatment, y = RootShoot)) + geom_boxplot() + facet_grid(. ~ Condition) + mytheme
 ```
 
-### RMF
+## RMF
 ```{r}
 rmf.aov <- aov(RMF~ Condition*Treatment, data = biomass)
 summary(rmf.aov) 
@@ -316,7 +348,7 @@ TukeyHSD(malic.wk8.aov)
 ```{r Malic Acid Boxplot}
 clusia.boxplot <- ggplot(data = clusia.malic, aes(x = Treatment, y = MalicAverage, fill = Condition)) + geom_boxplot() + geom_point(aes(fill = Condition), size = 2, shape = 21, position = position_jitterdodge()) + facet_grid(. ~ Week) 
 
-clusia.boxplot <- clusia.boxplot + theme_bw() +scale_fill_manual(values=c("indianred3", "cadetblue3"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + theme(axis.title.x = element_blank()) + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) + theme(legend.position = c(0.095, 0.9))
+clusia.boxplot <- clusia.boxplot + theme_bw() + scale_fill_manual(values=c("indianred3", "cadetblue3"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + theme(axis.title.x = element_blank()) + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) + theme(legend.position = c(0.095, 0.9))
 
 clusia.boxplot <- clusia.boxplot + ylab(expression(Malic~Acid~Concentration~(mu~mol~H~g^{-1})))
 
