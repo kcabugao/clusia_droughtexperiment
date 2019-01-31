@@ -1,11 +1,13 @@
 ---
-title: "R Notebook"
+title: "Clusia pratensis drought study using constructed bacterial communities"
 output:
   html_document:
     df_print: paged
     code_folding: hide
     toc: true
     toc_float: true
+    toc_depth: 4
+    
 ---
 
 # Introduction
@@ -15,6 +17,7 @@ output:
 library(tidyverse)
 library(plotrix)
 library(car)
+library(ggpubr)
 ```
 
 # Biomass Measurements
@@ -22,47 +25,49 @@ library(car)
 biomass <- read.csv("~/Documents/LabStats/Clusia/GrowthMeasurements.csv", header = TRUE, stringsAsFactors = TRUE, na.strings = "NA")
 biomass <- biomass %>% 
   arrange(Condition, Treatment, SampleNumber)
+```
+
+## Controls
+No difference between Control plants and plants that were inoculated with autoclaved bacteria (Control Mock). Confirms that the inoculation process itself does not account for changes between control plants and sample plants. 
+
+```{r}
+controls <- biomass %>% 
+  filter(Treatment == "Control" | Treatment == "Control Mock")
+```
+
+## Soil water
+```{r}
+soilwater.control <- aov(SoilWater ~ Condition * Treatment, data = controls)
+summary(soilwater.control) # no difference between control and control mock 
+```
+
+## Total Dry Mass
+```{r}
+totaldrywt.control <- aov(Total_DryWt ~ Condition * Treatment, data = controls)
+summary(totaldrywt.control) # no difference between control and control mock 
+```
+
+## Root biomass
+```{r}
+rootbiomass.control <- aov(RootBiomass ~ Condition * Treatment, data = controls)
+summary(rootbiomass.control) # no difference between control and control mock
+```
+
+## Root:Shoot 
+```{r}
+rootshoot.control <- aov(RootShoot ~ Condition * Treatment, data = controls)
+summary(rootshoot.control) # slight interaction term, but negligible
+```
+
+## RMF
+```{r}
+rmf.control <- aov(RMF ~ Condition * Treatment, data = controls)
+summary(rmf.control)
 
 # removing control mock
 biomass <- biomass %>%
   filter(Treatment != "Control Mock")
 ```
-
-## Controls
-```{r}
-controls <- biomass %>% 
-  filter(Treatment == "Control" | Treatment == "Control Mock")
-
-# pot weight
-potwt.control <- aov(PotWt ~ Condition * Treatment, data = controls)
-summary(potwt.control) # no difference between control and control mock 
-
-# leaf fresh weight
-leaf_fw.control <- aov(Leaf_FreshWt ~ Condition * Treatment, data = controls)
-summary(leaf_fw.control)  # no difference between control and control mock
-
-# soil water
-soilwater.control <- aov(SoilWater ~ Condition * Treatment, data = controls)
-summary(soilwater.control) # no difference between control and control mock 
-
-# total dry weight
-totaldrywt.control <- aov(Total_DryWt ~ Condition * Treatment, data = controls)
-summary(totaldrywt.control) # no difference between control and control mock 
-
-# root biomass
-rootbiomass.control <- aov(RootBiomass ~ Condition * Treatment, data = controls)
-summary(rootbiomass.control) # no difference between control and control mock 
-
-# root:shoot 
-rootshoot.control <- aov(RootShoot ~ Condition * Treatment, data = controls)
-summary(rootshoot.control) # slight interaction term, but negligible
-
-# RMF
-rmf.control <- aov(RMF ~ Condition * Treatment, data = controls)
-summary(rmf.control)
-
-```
-
 
 ## Summary Stats
 ```{r}
@@ -78,65 +83,32 @@ View(biomass.sum2)
 ```
 
 ## Boxplots
-### Biomass 
+### Total Biomass
 ```{r}
 mytheme <- theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
-biomass.box <- ggplot(data = biomass, aes(x = Treatment, y = Total_DryWt, fill = Condition)) + geom_boxplot() + mytheme + scale_fill_manual(values=c("indianred3", "cadetblue3"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(legend.position = c(0.1, 0.85)) + ylab("Biomass (g DW)") + xlab("Constructed Community") + scale_x_discrete(limits = c("Control", "Nonfunctional Isolates", "Drought Isolates", "Phosphorus Isolates", "All Isolates"))
-
-pdf("Biomass.pdf")
-plot(biomass.box)
-dev.off()
+ggplot(data = biomass, aes(x = Treatment, y = Total_DryWt, fill = Condition)) + geom_boxplot() + mytheme + scale_fill_manual(values=c("indianred3", "cadetblue3"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(legend.position = c(0.1, 0.85)) + ylab("Biomass (g DW)") + xlab("Constructed Community") + scale_x_discrete(limits = c("Control", "Nonfunctional Isolates", "Drought Isolates", "Phosphorus Isolates", "All Isolates"))
 ```
 
 ### Root biomass
 ```{r}
-rootbiomass.box <- ggplot(data = biomass, aes(x = Treatment, y = RootBiomass, fill = Condition)) + geom_boxplot() + mytheme + scale_fill_manual(values=c("indianred3", "cadetblue3"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(legend.position = c(0.1, 0.85)) + ylab("Root Biomass (g DW)") + xlab("Constructed Community") + scale_x_discrete(limits = c("Control", "Nonfunctional Isolates", "Drought Isolates", "Phosphorus Isolates", "All Isolates"))
-
-pdf("RootBiomass_Boxplot.pdf")
-plot(rootbiomass.box)
-dev.off()
+ggplot(data = biomass, aes(x = Treatment, y = RootBiomass, fill = Condition)) + geom_boxplot() + mytheme + scale_fill_manual(values=c("indianred3", "cadetblue3"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(legend.position = c(0.1, 0.85)) + ylab("Root Biomass (g DW)") + xlab("Constructed Community") + scale_x_discrete(limits = c("Control", "Nonfunctional Isolates", "Drought Isolates", "Phosphorus Isolates", "All Isolates"))
 ```
 
 Possible trend in both total biomass and root biomass is that both Drought and Phosphorus communities have consistently higher means than the control, nonfunctional isolates, and all isolates plants. Although not statistically significant, they suggest that there may be an advantage to the plants to have specifically these specialized constructed communities during drought conditions. 
 
 ### Root:Shoot
 ```{r}
-rootshoot.box <- ggplot(data = biomass, aes(x = Treatment, y = RootShoot, fill = Condition)) + geom_boxplot() + mytheme + scale_fill_manual(values=c("indianred3", "cadetblue3"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(legend.position = c(0.1, 0.85)) + ylab("Root : Shoot") + xlab("Constructed Community") + scale_x_discrete(limits = c("Control", "Nonfunctional Isolates", "Drought Isolates", "Phosphorus Isolates", "All Isolates"))
-
-pdf("RootShoot_Boxplot.pdf")
-plot(rootshoot.box)
-dev.off()
+ggplot(data = biomass, aes(x = Treatment, y = RootShoot, fill = Condition)) + geom_boxplot() + mytheme + scale_fill_manual(values=c("indianred3", "cadetblue3"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(legend.position = c(0.1, 0.85)) + ylab("Root : Shoot") + xlab("Constructed Community") + scale_x_discrete(limits = c("Control", "Nonfunctional Isolates", "Drought Isolates", "Phosphorus Isolates", "All Isolates"))
 ```
 
 ### Root Mass Fraction
 ```{r}
-rmf.box <- ggplot(data = biomass, aes(x = Treatment, y = RMF, fill = Condition)) + geom_boxplot() + mytheme + scale_fill_manual(values=c("indianred3", "cadetblue3"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(legend.position = c(0.1, 0.85)) + ylab("Root Mass Fraction") + xlab("Constructed Community") + scale_x_discrete(limits = c("Control", "Nonfunctional Isolates", "Drought Isolates", "Phosphorus Isolates", "All Isolates"))
-
-pdf("rmf_Boxplot.pdf")
-plot(rmf.box)
-dev.off()
+ggplot(data = biomass, aes(x = Treatment, y = RMF, fill = Condition)) + geom_boxplot() + mytheme + scale_fill_manual(values=c("indianred3", "cadetblue3"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(legend.position = c(0.1, 0.85)) + ylab("Root Mass Fraction") + xlab("Constructed Community") + scale_x_discrete(limits = c("Control", "Nonfunctional Isolates", "Drought Isolates", "Phosphorus Isolates", "All Isolates"))
 ```
 
-# Biomass ANOVAs
-## Leaf Fresh Weight
-```{r}
-leaf.aov <- aov(Leaf_FreshWt ~ Condition*Treatment, data = biomass)
-summary(leaf.aov) 
-
-# testing variance
-plot(leaf.aov, 1)
-leveneTest(Leaf_FreshWt ~ Condition*Treatment, data = biomass)
-
-# testing normality
-plot(leaf.aov, 2) 
-leaf.residuals <- residuals(object = leaf.aov)
-shapiro.test(x = leaf.residuals)
-
-ggplot(data = biomass, aes(x = Treatment, y = Leaf_FreshWt)) + geom_boxplot() + facet_grid(. ~ Condition) + scale_y_continuous(limits = c(0, 200)) + mytheme + ylab("Leaf Fresh Weight (g)")
-```
-
-## Soil Water
+## ANOVAs
+### Soil Water
 ```{r}
 soilwater.aov <- aov(SoilWater ~ Condition*Treatment, data = biomass)
 summary(soilwater.aov) 
@@ -153,8 +125,19 @@ shapiro.test(x = water.residuals)
 ggplot(data = biomass, aes(x = Treatment, y = SoilWater)) + geom_boxplot() + facet_grid(. ~ Condition) + mytheme
 ```
 
-## Total Dry Weight
-```{r}
+### Total Dry Mass
+```{r Total Dry Mass Histogram & ANOVA}
+
+# density histogram
+ggplot(data = biomass, aes(x = Total_DryWt)) + geom_histogram(aes(y=..density..), binwidth = 15, color="black", fill="gray") + geom_density(alpha = 0.2, fill = "#FF6666") + theme_classic() + xlab("Biomass (g DW)") + ylab("Density") + mytheme + ggtitle("Total Dry Mass Density Histogram")
+
+# histogram by Condition (water treatment)
+mu <- biomass %>% 
+  group_by(Condition) %>% 
+  summarise(mean = mean(Total_DryWt))
+
+ggplot(data = biomass, aes(x = Total_DryWt, fill = Condition)) + geom_histogram(binwidth = 15, position = "identity", alpha = 0.5) + geom_vline(data = mu, aes(xintercept=mean, color=Condition), linetype="dashed") + scale_color_manual(values=c("indianred3", "cadetblue3")) + theme_classic() + xlab("Biomass (g DW)") + ylab("Count") + theme(legend.position = c(0.9, 0.9)) + ggtitle("Total Dry Mass Histogram")
+
 totaldrywt.aov <- aov(Total_DryWt ~ Condition*Treatment, data = biomass)
 summary(totaldrywt.aov) 
 
@@ -167,11 +150,47 @@ plot(totaldrywt.aov, 2)
 totaldrywt.residuals <- residuals(object = totaldrywt.aov)
 shapiro.test(x = totaldrywt.residuals) 
 
-ggplot(data = biomass, aes(x = Treatment, y = Total_DryWt)) + geom_boxplot() + facet_grid(. ~ Condition) + mytheme
 ```
 
-## Root Biomass
-```{r}
+```{r Total Dry Mass Normality & Outliers}
+
+# identifying outliers
+mod <- lm(Total_DryWt ~ Condition, data = biomass)
+cooksd <- cooks.distance(mod)
+
+plot(cooksd, pch="*", cex = 2, main = "Influential Obs in Total Dry Mass by Cooks Distance")
+abline(h = 4*mean(cooksd, na.rm = T), col = "red")
+text(x = 1: length(cooksd)+1, y = cooksd, labels = ifelse(cooksd>4*mean(cooksd, na.rm = T), names(cooksd), ""), col = "red")
+
+# identifying rows with the outliers
+biomass.out <- as.numeric(names(cooksd)[(cooksd > 4*mean(cooksd, na.rm = T))])
+
+# removing outliers and testing impact
+biomass <- biomass[-c(67,72), ]
+
+ggqqplot(biomass$Total_DryWt)
+shapiro.test(biomass$Total_DryWt) # completely normal
+
+# biomass total dry weight is now normal.
+# rerunning biomass anova with removed outliers
+totaldrywt.aov <- aov(Total_DryWt ~ Condition*Treatment, data = biomass)
+summary(totaldrywt.aov) # same conclusion
+```
+
+### Root Biomass
+```{r Root Biomass Histogram & ANOVA}
+
+# density histogram
+ggplot(data = biomass, aes(x = RootBiomass)) + geom_histogram(binwidth = 8, aes(y =..density..), colour = "black", fill = "white") + geom_density(alpha = 0.2, fill = "#FF6666") + mytheme + ggtitle("Root Biomass Density Diagram")
+
+# by water treatment
+mu2 <- biomass %>% 
+  group_by(Condition) %>% 
+  summarise(mean = mean(RootBiomass))
+
+ggplot(data = biomass, aes(x = RootBiomass, fill = Condition)) + geom_histogram(binwidth =9, position = "identity", alpha = 0.5) + geom_vline(data = mu2, aes(xintercept=mean, color=Condition), linetype="dashed") + scale_color_manual(values=c("indianred3", "cadetblue3")) + theme_classic() + xlab("Root Biomass (g DW)") + ylab("Count") + theme(legend.position = c(0.9, 0.9)) + mytheme + ggtitle("Root Biomass Histogram")
+
+# ANOVA
 rootbiomass.aov <- aov(RootBiomass ~ Condition*Treatment, data = biomass)
 summary(rootbiomass.aov) 
 
@@ -184,11 +203,42 @@ plot(rootbiomass.aov, 2)
 rootbiomass.residuals <- residuals(object = rootbiomass.aov)
 shapiro.test(x = rootbiomass.residuals)
 
-ggplot(data = biomass, aes(x = Treatment, y = RootBiomass)) + geom_boxplot() + facet_grid(. ~ Condition) + mytheme
 ```
 
-## Root:Shoot
-```{r}
+```{r Root Biomass Normality & Outliers}
+
+# identifying outliers
+mod2 <- lm(RootBiomass ~ Condition, data = biomass)
+cooksd2 <- cooks.distance(mod2)
+
+plot(cooksd2, pch = "*", cex = 2, main = "Influential Observations in Root Biomass")
+abline(h = 4*mean(cooksd2, na.rm = T), col = "red")
+text(x=1: length(cooksd2) + 1, y= cooksd2, labels = ifelse(cooksd2>4*mean(cooksd2, na.rm = T), names(cooksd2), ""), col = "red")
+
+# same samples are causing the irregularity
+rootbiomass.out <- as.numeric(names(cooksd2)[(cooksd2 > 4*mean(cooksd2, na.rm = T))])
+head(biomass[rootbiomass.out, ])
+
+# removing outliers and testing impact
+biomass <- biomass[-c(67,72), ]
+
+ggqqplot(biomass$RootBiomass)
+shapiro.test(biomass$RootBiomass)
+```
+
+### Root:Shoot
+```{r Root:Shoot Histogram & ANOVA}
+# density histogram
+ggplot(data = biomass, aes(x = RootShoot)) + geom_histogram(binwidth = 0.8, aes(y =..density..), colour = "black", fill = "white") + geom_density(alpha = 0.2, fill = "#FF6666") + mytheme + ggtitle("Root:Shoot Density Histogram")
+
+# by water treatment
+mu3 <- biomass %>% 
+  group_by(Condition) %>% 
+  summarise(mean = mean(RootShoot))
+
+ggplot(data = biomass, aes(x = RootShoot, fill = Condition)) + geom_histogram(binwidth = 0.8, position = "identity", alpha = 0.5) + geom_vline(data = mu3, aes(xintercept=mean, color=Condition), linetype="dashed") + scale_color_manual(values=c("indianred3", "cadetblue3")) + theme_classic() + xlab("RootShoot") + ylab("Count") + theme(legend.position = c(0.9, 0.9)) + mytheme + ggtitle("Root:Shoot Histogram")
+
+# ANOVA
 rootshoot.aov <- aov(RootShoot ~ Condition*Treatment, data = biomass)
 summary(rootshoot.aov) 
 
@@ -201,11 +251,41 @@ plot(rootshoot.aov, 2)
 rootshoot.residuals <- residuals(object = rootshoot.aov)
 shapiro.test(x = rootshoot.residuals) 
 
-ggplot(data = biomass, aes(x = Treatment, y = RootShoot)) + geom_boxplot() + facet_grid(. ~ Condition) + mytheme
 ```
 
-## RMF
-```{r}
+```{r Root:Shoot Normality & Outliers}
+
+# identifying outliers
+mod3 <- lm(RootShoot ~ Condition, data = biomass)
+cooksd3 <- cooks.distance(mod3)
+
+plot(cooksd3, pch = "*", cex = 2, main = "Influential Observations in RootShoot")
+abline(h = 4*mean(cooksd3, na.rm = T), col = "red")
+text(x=1: length(cooksd3) + 1, y= cooksd3, labels = ifelse(cooksd3>4*mean(cooksd3, na.rm = T), names(cooksd3), ""), col = "red")
+
+rootbiomass.out <- as.numeric(names(cooksd3)[(cooksd3 > 4*mean(cooksd3, na.rm = T))])
+head(biomass[rootbiomass.out, ])
+
+# removing outliers and testing impact
+biomass.rootshoot <- biomass[-c(10,42, 51, 54), ]
+
+ggqqplot(biomass.rootshoot$RootShoot)
+shapiro.test(biomass.rootshoot$RootShoot)
+```
+
+### RMF
+```{r Histogram & ANOVA}
+# density histogram
+ggplot(data = biomass, aes(x = RMF)) + geom_histogram(binwidth = 0.03, aes(y =..density..), colour = "black", fill = "white") + geom_density(alpha = 0.2, fill = "#FF6666") + mytheme + ggtitle("Root Mass Fraction Density Histogram")
+
+# by water treatment
+mu4 <- biomass%>% 
+  group_by(Condition) %>% 
+  summarise(mean = mean(RMF))
+
+ggplot(data = biomass, aes(x = RMF, fill = Condition)) + geom_histogram(binwidth = 0.03, position = "identity", alpha = 0.5) + geom_vline(data = mu4, aes(xintercept=mean, color=Condition), linetype="dashed") + scale_color_manual(values=c("indianred3", "cadetblue3")) + theme_classic() + xlab("Root Mass Fraction") + ylab("Count") + theme(legend.position = c(0.9, 0.9)) + mytheme + ggtitle("Root Mass Fraction Histogram")
+
+# ANOVA
 rmf.aov <- aov(RMF~ Condition*Treatment, data = biomass)
 summary(rmf.aov) 
 
@@ -218,13 +298,12 @@ plot(rmf.aov, 2)
 rmf.residuals <- residuals(object = rmf.aov)
 shapiro.test(x = rmf.residuals) 
 
-ggplot(data = biomass, aes(x = Treatment, y = RMF)) + geom_boxplot() + facet_grid(. ~ Condition) + mytheme + xlab("Isolate Community") + ylab("Root Mass Fraction")
 ```
 Note: Root mass fraction = mass of fine root (g) / total biomass (g)
 
 # Physiology Measurements
 ##  Malic Acid Titrations
-```{r Importing Malic Acid Data}
+```{r Malic Acid Data}
 library(tidyverse)
 clusia.malic <- read.csv("~/Documents/LabStats/Clusia/MalicAcid.csv", header = TRUE , sep = ",", stringsAsFactors = TRUE, na.strings = "na")
 ```
@@ -292,8 +371,8 @@ clusia.malic <- clusia.malic %>%
 ```
 
 
-### Malic Acid Summary Stats
-```{r Summary Statistics - Malic Acid}
+### Mean, SD, Std.Error
+```{r}
 malic.sum <- clusia.malic %>% 
   group_by(Week, Condition, Treatment) %>% 
   summarise(n = n(),
@@ -304,56 +383,156 @@ View(malic.sum)
 ```
 
 ### Malic Acid ANOVAs
+#### Week 0
+```{r Malic Acid Week 0}
 
-```{r Malic Acid ANOVAs}
-# Week 0
+# subsetting Week 0
 malic.wk0 <- clusia.malic %>% 
   filter(Week == "Wk_0")
 
+# density histogram
+ggplot(data = malic.wk0, aes(x = MalicAverage)) + geom_histogram(binwidth = 25, aes(y =..density..), colour = "black", fill = "white") + geom_density(alpha = 0.2, fill = "#FF6666") 
+
+# by water treatment
+malic.wk0.mu <- malic.wk0%>% 
+  group_by(Condition) %>% 
+  summarise(mean = mean(MalicAverage, na.rm = TRUE))
+
+ggplot(data = malic.wk0, aes(x = MalicAverage, fill = Condition)) + geom_histogram(binwidth = 25, position = "identity", alpha = 0.5) + geom_vline(data = malic.wk0.mu, aes(xintercept=mean, color=Condition), linetype="dashed") + scale_color_manual(values=c("indianred3", "cadetblue3")) + theme_classic() + xlab("Malic Acid") + ylab("Count") + theme(legend.position = c(0.9, 0.9))
+
+# ANOVA
 malic.wk0.aov <- aov(MalicAverage ~ Condition * Treatment, data = malic.wk0)
 summary(malic.wk0.aov) # not sigificant between treatment
 
-# Week 2
+# testing homogeneity of variances
+plot(malic.wk0.aov, 1)
+leveneTest(MalicAverage ~ Condition*Treatment, data = malic.wk0) # p > 0.05 means no violation of homogeneity of varaince
+
+# normality test
+plot(malic.wk0.aov, 2)
+malic.wk0.residuals <- residuals(object = malic.wk0.aov)
+shapiro.test(x = malic.wk0.residuals) # p > 0.05 means normal data 
+
+ggqqplot(malic.wk0$MalicAverage)
+shapiro.test(malic.wk0$MalicAverage)
+```
+
+#### Week 2
+```{r Malic Acid Week 2}
 malic.wk2 <- clusia.malic %>% 
   filter(Week == "Wk_2")
 
 malic.wk2.aov <- aov(MalicAverage ~ Condition * Treatment, data = malic.wk2)
-summary(malic.wk2.aov) # significant drought effect
+summary(malic.wk2.aov)
+```
 
-# Week 4
+#### Week 4
+```{r Malic Acid Week 4}
+# subset for Week 4
 malic.wk4 <- clusia.malic %>% 
   filter(Week == "Wk_4")
 
-malic.wk4.aov <- aov(MalicAverage ~ Condition * Treatment, data = malic.wk4)
-summary(malic.wk4.aov) # sigificant drought effect
+# density histogram
+ggplot(data = malic.wk4, aes(x = MalicAverage)) + geom_histogram(binwidth = 50, aes(y =..density..), colour = "black", fill = "white") + geom_density(alpha = 0.2, fill = "#FF6666") 
 
-# Week 6
+# by water treatment
+malic.wk4.mu <- malic.wk4%>% 
+  group_by(Condition) %>% 
+  summarise(mean = mean(MalicAverage, na.rm = TRUE))
+
+ggplot(data = malic.wk4, aes(x = MalicAverage, fill = Condition)) + geom_histogram(binwidth = 50, position = "identity", alpha = 0.5) + geom_vline(data = malic.wk4.mu, aes(xintercept=mean, color=Condition), linetype="dashed") + scale_color_manual(values=c("indianred3", "cadetblue3")) + theme_classic() + xlab("Malic Acid") + ylab("Count") + theme(legend.position = c(0.9, 0.9))
+
+# ANOVA
+malic.wk4.aov <- aov(MalicAverage ~ Condition * Treatment, data = malic.wk4)
+summary(malic.wk4.aov)
+
+# testing homogeneity of variances
+plot(malic.wk4.aov, 1)
+leveneTest(MalicAverage ~ Condition*Treatment, data = malic.wk4) # p > 0.05 means no violation of homogeneity of varaince
+
+# normality test
+plot(malic.wk4.aov, 2)
+malic.wk4.residuals <- residuals(object = malic.wk4.aov)
+shapiro.test(x = malic.wk4.residuals) # p > 0.05 means normal data
+
+ggqqplot(malic.wk4$MalicAverage)
+shapiro.test(malic.wk4$MalicAverage)
+```
+
+#### Week 6
+```{r Malic Acid Week 6}
 malic.wk6 <- clusia.malic %>% 
   filter(Week == "Wk_6")
 
 malic.wk6.aov <- aov(MalicAverage ~ Condition * Treatment, data = malic.wk6)
 summary(malic.wk6.aov) # sigificant drought effect
+```
 
-# Week 8
+#### Week 8
+```{r Malic Acid Week 8}
+# subsetting for Week 8 
 malic.wk8 <- clusia.malic %>% 
   filter(Week == "Wk_8")
 
+# density histogram
+ggplot(data = malic.wk8, aes(x = MalicAverage)) + geom_histogram(binwidth = 80, aes(y =..density..), colour = "black", fill = "white") + geom_density(alpha = 0.2, fill = "#FF6666") 
+
+# by water treatment
+malic.wk8.mu <- malic.wk8%>% 
+  group_by(Condition) %>% 
+  summarise(mean = mean(MalicAverage, na.rm = TRUE))
+
+ggplot(data = malic.wk8, aes(x = MalicAverage, fill = Condition)) + geom_histogram(binwidth = 80, position = "identity", alpha = 0.5) + geom_vline(data = malic.wk4.mu, aes(xintercept=mean, color=Condition), linetype="dashed") + scale_color_manual(values=c("indianred3", "cadetblue3")) + theme_classic() + xlab("Malic Acid") + ylab("Count") + theme(legend.position = c(0.9, 0.9))
+
+# ANOVA
 malic.wk8.aov <- aov(MalicAverage ~ Condition * Treatment, data = malic.wk8)
 summary(malic.wk8.aov) # significant drought effect and microbial effect
-
 TukeyHSD(malic.wk8.aov)
+
+# testing homogeneity of variances
+plot(malic.wk8.aov, 1)
+leveneTest(MalicAverage ~ Condition*Treatment, data = malic.wk8) # p > 0.05 means no violation of homogeneity of varaince
+
+# normality test
+plot(malic.wk8.aov, 2)
+malic.wk8.residuals <- residuals(object = malic.wk8.aov)
+shapiro.test(x = malic.wk8.residuals) # p > 0.05 means normal data
+
+ggqqplot(malic.wk8$MalicAverage)
+shapiro.test(malic.wk8$MalicAverage)
 ```
 
+```{r Malic Acid Week 8 Outliers}
+
+# identifying outliers
+wk8.mod <- lm(MalicAverage ~ Condition, data = malic.wk8)
+cooksd.wk8 <- cooks.distance(wk8.mod)
+
+plot(cooksd.wk8, pch = "*", cex = 2, main = "Influential Observations in Wk 8 Malic Acid")
+abline(h = 4*mean(cooksd.wk8, na.rm = T), col = "red")
+text(x=1: length(cooksd.wk8) + 1, y= cooksd.wk8, labels = ifelse(cooksd.wk8>4*mean(cooksd.wk8, na.rm = T), names(cooksd.wk8), ""), col = "red")
+
+wk8.malic.out <- as.numeric(names(cooksd.wk8)[(cooksd.wk8 > 4*mean(cooksd.wk8, na.rm = T))])
+head(biomass[wk8.malic.out, ])
+
+# removing outliers and testing impact
+malic.wk8 <- malic.wk8[-c(24), ]
+
+ggqqplot(malic.wk8$MalicAverage)
+shapiro.test(malic.wk8$MalicAverage)
+```
 
 ```{r Malic Acid Boxplot}
+
 clusia.boxplot <- ggplot(data = clusia.malic, aes(x = Treatment, y = MalicAverage, fill = Condition)) + geom_boxplot() + geom_point(aes(fill = Condition), size = 2, shape = 21, position = position_jitterdodge()) + facet_grid(. ~ Week) 
 
-clusia.boxplot <- clusia.boxplot + theme_bw() + scale_fill_manual(values=c("indianred3", "cadetblue3"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + theme(axis.title.x = element_blank()) + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) + theme(legend.position = c(0.095, 0.9))
+clusia.boxplot <- clusia.boxplot + theme_bw() +scale_fill_manual(values=c("indianred3", "cadetblue3"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + theme(axis.title.x = element_blank()) + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) + theme(legend.position = c(0.095, 0.9))
 
 clusia.boxplot <- clusia.boxplot + ylab(expression(Malic~Acid~Concentration~(mu~mol~H~g^{-1})))
 
-malic.wk8.aov <- aov(MalicAverage ~ Condition * Treatment, data = malic.wk8)
-summary(malic.wk8.aov) # significant drought effect and microbial effect
+pdf("MalicAcid_Boxplot.pdf")
+plot(clusia.boxplot)
+dev.off()
 ```
 
 At Week 0, both well-watered and drought plants show no difference in malic acid concentrations as expected. However, as the drought trial progresses, well-watered plants and drought plants begin to diverge significantly at Week 2 (p-value < 0.001). Higher amounts of malic acid in well-watered plants indicate higher CAM activity, which is in contrast with hypotheses that CAM activity would be highest in drought plants due to experiencing drought stress. Furthermore, there was no significant effect of microbial community until the last week (p- value < 0.05) with no interaction term, suggesting that availability of water is still the dominant driver of malic acid concentration. Tukeys HSD results indicate that although the differences in microbial communities are different, that these differences are occuring between well-watered microbial communities versus droughted microbial communities, verifying that the water availability is driving differences between plants and not the composition of the the microbial communities themselves. 
@@ -413,15 +592,15 @@ summary(lipid.control8.aov) # not sigificant between autoclaved and inoculated c
 # removing Control Mock
 clusia.lipid <- clusia.lipid %>% 
   filter(Treatment != "Control Mock")
-View(clusia.lipid)
+
 
 # arranging by Week, Water, and Treatment
 clusia.lipid <- clusia.lipid %>% 
   arrange(Week, Condition, Treatment)
 ```
 
-### Lipid Peroxidation Summary Stats
-```{r Lipid Summary}
+### Mean, SD, Std. Error
+```{r}
 
 lipid.sum <- clusia.lipid %>% 
   group_by(Week, Condition, Treatment) %>% 
@@ -439,52 +618,141 @@ lipid.errobars
 ```
 
 ### Lipid Peroxidation ANOVAs
-```{r ANOVAs - LipidPerox}
+#### Week 0
+```{r Lipid Perox Week 0}
 # Week 0
 lipid.wk0 <- clusia.lipid %>% 
   filter(Week == "Wk_0")
 
+# density histogram
+ggplot(data = lipid.wk0, aes(x = LipidPerox)) + geom_histogram(binwidth = 5, aes(y =..density..), colour = "black", fill = "white") + geom_density(alpha = 0.2, fill = "#FF6666") 
+
+# by water treatment
+lipid.wk0.mu <- lipid.wk0 %>% 
+  group_by(Condition) %>% 
+  summarise(mean = mean(LipidPerox, na.rm = TRUE))
+
+ggplot(data = lipid.wk0, aes(x = LipidPerox, fill = Condition)) + geom_histogram(binwidth = 5, position = "identity", alpha = 0.5) + geom_vline(data = lipid.wk0.mu, aes(xintercept=mean, color=Condition), linetype="dashed") + scale_color_manual(values=c("indianred3", "cadetblue3")) + theme_classic() + xlab("Lipid Peroxidation") + ylab("Count") + theme(legend.position = c(0.9, 0.9))
+
+# ANOVA
 lipid.wk0.aov <- aov(LipidPerox ~ Condition * Treatment, data = lipid.wk0)
 summary(lipid.wk0.aov) 
 
+# testing homogeneity of variances
+plot(lipid.wk0.aov, 1)
+leveneTest(LipidPerox ~ Condition*Treatment, data = lipid.wk0) # p > 0.05 means no violation of homogeneity of varaince
+
+# normality test
+plot(lipid.wk0.aov, 2)
+lipid.wk0.residuals <- residuals(object = lipid.wk0.aov)
+shapiro.test(x = lipid.wk0.residuals) # p < 0.05 means normal data
+
+ggqqplot(lipid.wk0$LipidPerox)
+shapiro.test(lipid.wk0$LipidPerox)
+```
+
+```{r Lipid Perox Week 0 Outliers}
+# identifying outliers
+lipid.wk0.mod <- lm(LipidPerox ~ Condition, data = lipid.wk0)
+cooksd.wk0 <- cooks.distance(lipid.wk0.mod)
+
+plot(cooksd.wk0, pch = "*", cex = 2, main = "Influential Observations in Wk 0 Lipid Peroxidation")
+abline(h = 4*mean(cooksd.wk0, na.rm = T), col = "red")
+text(x=1: length(cooksd.wk0) + 1, y= cooksd.wk0, labels = ifelse(cooksd.wk0>4*mean(cooksd.wk0, na.rm = T), names(cooksd.wk0), ""), col = "red")
+
+wk0.lipid.out <- as.numeric(names(cooksd.wk0)[(cooksd.wk0 > 4*mean(cooksd.wk0, na.rm = T))])
+head(clusia.lipid[wk0.lipid.out, ])
+
+# removing outliers and testing impact
+lipid.wk0 <- lipid.wk0[-c(5), ]
+
+ggqqplot(lipid.wk0$LipidPerox)
+shapiro.test(lipid.wk0$LipidPerox)
+```
+
+#### Week 2
+```{r Lipid Perox Week 2}
 # Week 2
 lipid.wk2 <- clusia.lipid %>% 
   filter(Week == "Wk_2")
 
 lipid.wk2.aov <- aov(LipidPerox ~ Condition * Treatment, data = lipid.wk2)
 summary(lipid.wk2.aov)
+```
 
+#### Week 4
+```{r Lipid Perox Week 4}
 # Week 4
 lipid.wk4 <- clusia.lipid %>% 
   filter(Week == "Wk_4")
 
+# density histogram
+ggplot(data = lipid.wk4, aes(x = LipidPerox)) + geom_histogram(binwidth = 8, aes(y =..density..), colour = "black", fill = "white") + geom_density(alpha = 0.2, fill = "#FF6666") 
+
+# by water treatment
+lipid.wk4.mu <- lipid.wk4 %>% 
+  group_by(Condition) %>% 
+  summarise(mean = mean(LipidPerox, na.rm = TRUE))
+
+ggplot(data = lipid.wk4, aes(x = LipidPerox, fill = Condition)) + geom_histogram(binwidth = 8, position = "identity", alpha = 0.5) + geom_vline(data = lipid.wk4.mu, aes(xintercept=mean, color=Condition), linetype="dashed") + scale_color_manual(values=c("indianred3", "cadetblue3")) + theme_classic() + xlab("Lipid Peroxidation") + ylab("Count") + theme(legend.position = c(0.9, 0.9))
+
+# ANOVA
 lipid.wk4.aov <- aov(LipidPerox ~ Condition * Treatment, data = lipid.wk4)
 summary(lipid.wk4.aov) 
 
+# testing homogeneity of variances
+plot(lipid.wk4.aov, 1)
+leveneTest(LipidPerox ~ Condition*Treatment, data = lipid.wk4) 
+
+# normality test
+plot(lipid.wk4.aov, 2)
+lipid.wk4.residuals <- residuals(object = lipid.wk4.aov)
+shapiro.test(x = lipid.wk4.residuals) 
+
+ggqqplot(lipid.wk4$LipidPerox)
+shapiro.test(lipid.wk4$LipidPerox)
+```
+
+#### Week 6
+```{r Lipid Perox Week 6}
 # Week 6
 lipid.wk6 <- clusia.lipid %>% 
   filter(Week == "Wk_6")
 
 lipid.wk6.aov <- aov(LipidPerox ~ Condition * Treatment, data = lipid.wk6)
 summary(lipid.wk6.aov)
+```
 
-lipid.wk6.aov <- aov(LipidPerox ~ Condition * Treatment, data = lipid.wk6)
-summary(lipid.wk6.aov) # significant <0.1 microbial effect
-
-
-# Week 8
+#### Week 8
+```{r Lipid Perox Week 8}
 lipid.wk8 <- clusia.lipid %>% 
   filter(Week == "Wk_8")
 
-lipid.wk8.aov <- aov(LipidPerox ~ Condition * Treatment, data = lipid.wk8)
-summary(lipid.wk8.aov) # significant drought effect, significant microbial effect
+# density histogram
+ggplot(data = lipid.wk8, aes(x = LipidPerox)) + geom_histogram(binwidth = 10, aes(y =..density..), colour = "black", fill = "white") + geom_density(alpha = 0.2, fill = "#FF6666") 
 
+# by water treatment
+lipid.wk8.mu <- lipid.wk8 %>% 
+  group_by(Condition) %>% 
+  summarise(mean = mean(LipidPerox, na.rm = TRUE))
+
+ggplot(data = lipid.wk8, aes(x = LipidPerox, fill = Condition)) + geom_histogram(binwidth = 10, position = "identity", alpha = 0.5) + geom_vline(data = lipid.wk8.mu, aes(xintercept=mean, color=Condition), linetype="dashed") + scale_color_manual(values=c("indianred3", "cadetblue3")) + theme_classic() + xlab("Lipid Peroxidation") + ylab("Count") + theme(legend.position = c(0.9, 0.9))
+
+# ANOVA
+lipid.wk8.aov <- aov(LipidPerox ~ Condition * Treatment, data = lipid.wk8)
+summary(lipid.wk8.aov)
 TukeyHSD(lipid.wk8.aov)
 
-lipid.wk8.aov <- aov(LipidPerox ~ Condition * Treatment, data = lipid.wk8)
-summary(lipid.wk8.aov) # significant drought effect, significant microbial effect
+# testing homogeneity of variances
+plot(lipid.wk8.aov, 1)
+leveneTest(LipidPerox ~ Condition*Treatment, data = lipid.wk8) # p > 0.05 means no violation of homogeneity of varaince
 
+# normality test
+plot(lipid.wk8.aov, 2)
+lipid.wk8.residuals <- residuals(object = lipid.wk8.aov)
+shapiro.test(x = lipid.wk8.residuals)
 ```
+
 
 ```{r Lipid Peroxidation Boxplot}
 lipid.boxplot <- ggplot(data = clusia.lipid, aes(x = Treatment, y = LipidPerox, fill = Condition)) + geom_boxplot() + geom_point(aes(fill = Condition), size = 2, shape = 21, position = position_jitterdodge()) + facet_grid(. ~ Week) 
@@ -564,8 +832,8 @@ clusia.lipid <- clusia.lipid %>%
   arrange(Week, Condition, Treatment)
 ```
 
-### Proline Summary Stats
-```{r Summary Statistics - Proline}
+### Mean, SD, Std. Error
+```{r}
 proline.sum <- clusia.proline %>% 
   group_by(Week, Condition, Treatment) %>% 
   summarise(n = n(),
@@ -582,29 +850,79 @@ proline.errobars
 ```
 
 ### Proline ANOVAs
-```{r ANOVAs - Proline}
+#### Week 0
+```{r Proline Week 0}
 # Week 0
 proline.wk0 <- clusia.proline %>% 
   filter(Week == "Wk_0")
 
-proline.wk0.aov <- aov(Proline ~ Condition * Treatment, data = proline.wk0)
-summary(proline.wk0.aov) # no significance
+# density histogram
+ggplot(data = proline.wk0, aes(x = Proline)) + geom_histogram(binwidth = 2, aes(y =..density..), colour = "black", fill = "white") + geom_density(alpha = 0.2, fill = "#FF6666") 
 
+# by water treatment
+proline.wk0.mu <- proline.wk0 %>% 
+  group_by(Condition) %>% 
+  summarise(mean = mean(Proline, na.rm = TRUE))
+
+ggplot(data = proline.wk0, aes(x = Proline, fill = Condition)) + geom_histogram(binwidth = 2, position = "identity", alpha = 0.5) + geom_vline(data = proline.wk0.mu, aes(xintercept=mean, color=Condition), linetype="dashed") + scale_color_manual(values=c("indianred3", "cadetblue3")) + theme_classic() + xlab("Proline") + ylab("Count") + theme(legend.position = c(0.9, 0.9))
+
+# ANOVA
+proline.wk0.aov <- aov(Proline ~ Condition * Treatment, data = proline.wk0)
+summary(proline.wk0.aov) 
+
+# testing homogeneity of variances
+plot(proline.wk0.aov, 1)
+leveneTest(Proline ~ Condition*Treatment, data = proline.wk0) 
+
+# normality test
+plot(proline.wk0.aov, 2)
+proline.wk0.residuals <- residuals(object = proline.wk0.aov)
+shapiro.test(x = proline.wk0.residuals)
+```
+
+#### Week 2
+```{r Proline Week 2}
 # Week 2
 proline.wk2 <- clusia.proline %>% 
   filter(Week == "Wk_2")
 
+# ANOVA
 proline.wk2.aov <- aov(Proline ~ Condition * Treatment, data = proline.wk2)
 summary(proline.wk2.aov) # significant drought effect (<0.1) and interaction term (< 0.05)
+```
 
+#### Week 4
+```{r Proline Week 4}
 # Week 4
 proline.wk4 <- clusia.proline %>% 
   filter(Week == "Wk_4")
 
+# density histogram
+ggplot(data = proline.wk4, aes(x = Proline)) + geom_histogram(binwidth = 2.5, aes(y =..density..), colour = "black", fill = "white") + geom_density(alpha = 0.2, fill = "#FF6666") 
+
+# by water treatment
+proline.wk4.mu <- proline.wk4 %>% 
+  group_by(Condition) %>% 
+  summarise(mean = mean(Proline, na.rm = TRUE))
+
+ggplot(data = proline.wk4, aes(x = Proline, fill = Condition)) + geom_histogram(binwidth = 2.5, position = "identity", alpha = 0.5) + geom_vline(data = proline.wk4.mu, aes(xintercept=mean, color=Condition), linetype="dashed") + scale_color_manual(values=c("indianred3", "cadetblue3")) + theme_classic() + xlab("Proline") + ylab("Count") + theme(legend.position = c(0.9, 0.9))
+
+# ANOVA
 proline.wk4.aov <- aov(Proline ~ Condition * Treatment, data = proline.wk4)
 summary(proline.wk4.aov) # significant drought effect
 
-# Week 6
+# testing homogeneity of variances
+plot(proline.wk4.aov, 1)
+leveneTest(Proline ~ Condition*Treatment, data = proline.wk4)
+
+# normality test
+plot(proline.wk4.aov, 2)
+proline.wk4.residuals <- residuals(object = proline.wk4.aov)
+shapiro.test(x = proline.wk4.residuals)
+```
+
+#### Week 6
+```{r Proline Week 6}
 proline.wk6 <- clusia.proline %>% 
   filter(Week == "Wk_6")
 
@@ -612,13 +930,36 @@ proline.wk6.aov <- aov(Proline ~ Condition * Treatment, data = proline.wk6)
 summary(proline.wk6.aov)  # significant drought effect (<0.001), microbial (<0.1), interaction (<0.1)
 
 TukeyHSD(proline.wk6.aov)
+```
 
+#### Week 8
+```{r Proline Week 8}
 # Week 8
 proline.wk8 <- clusia.proline %>% 
   filter(Week == "Wk_8")
 
+# density histogram
+ggplot(data = proline.wk8, aes(x = Proline)) + geom_histogram(binwidth = 4.5, aes(y =..density..), colour = "black", fill = "white") + geom_density(alpha = 0.2, fill = "#FF6666") 
+
+# by water treatment
+proline.wk8.mu <- proline.wk8 %>% 
+  group_by(Condition) %>% 
+  summarise(mean = mean(Proline, na.rm = TRUE))
+
+ggplot(data = proline.wk8, aes(x = Proline, fill = Condition)) + geom_histogram(binwidth = 4.5, position = "identity", alpha = 0.5) + geom_vline(data = proline.wk8.mu, aes(xintercept=mean, color=Condition), linetype="dashed") + scale_color_manual(values=c("indianred3", "cadetblue3")) + theme_classic() + xlab("Proline") + ylab("Count") + theme(legend.position = c(0.9, 0.9))
+
+# ANOVA
 proline.wk8.aov <- aov(Proline ~ Condition * Treatment, data = proline.wk8)
 summary(proline.wk8.aov) # significant drought effect (<0.001) and microbial effect (<0.1)
+
+# testing homogeneity of variances
+plot(proline.wk8.aov, 1)
+leveneTest(Proline ~ Condition*Treatment, data = proline.wk8) # p > 0.05 means no violation of homogeneity of varaince
+
+# normality test
+plot(proline.wk8.aov, 2)
+proline.wk8.residuals <- residuals(object = proline.wk8.aov)  # p > 0.05 means no violation of homogeneity of varaince
+shapiro.test(x = proline.wk8.residuals)
 ```
 
 ```{r Proline Boxplot}
@@ -644,13 +985,13 @@ osmo <- osmo %>%
 ```
 
 
-### Osmolality Controls
+### Controls
 ```{r Osmo Controls}
 # Week 0
 wk0.cont <- osmo %>% 
   filter(Treatment == "Control" | Treatment == "Control Mock") %>% 
   filter(Week == "Wk_0")
-View(wk0.cont)
+
 
 wk0.cont.aov <- aov(Osmolality ~ Condition * Treatment, data = wk0.cont)
 summary(wk0.cont.aov) # no significant differences between control mock and control
@@ -659,7 +1000,6 @@ summary(wk0.cont.aov) # no significant differences between control mock and cont
 wk2.cont <- osmo %>% 
   filter(Treatment == "Control" | Treatment == "Control Mock") %>% 
   filter(Week == "Wk_2")
-View(wk2.cont)
 
 wk2.cont.aov <- aov(Osmolality ~ Condition * Treatment, data = wk2.cont)
 summary(wk2.cont.aov) # no significant differences between control mock and control
@@ -668,7 +1008,6 @@ summary(wk2.cont.aov) # no significant differences between control mock and cont
 wk4.cont <- osmo %>% 
   filter(Treatment == "Control" | Treatment == "Control Mock") %>% 
   filter(Week == "Wk_4")
-View(wk4.cont)
 
 wk4.cont.aov <- aov(Osmolality ~ Condition * Treatment, data = wk4.cont)
 summary(wk4.cont.aov) # no significant differences between control mock and control
@@ -677,7 +1016,6 @@ summary(wk4.cont.aov) # no significant differences between control mock and cont
 wk6.cont <- osmo %>% 
   filter(Treatment == "Control" | Treatment == "Control Mock") %>% 
   filter(Week == "Wk_6")
-View(wk6.cont)
 
 wk6.cont.aov <- aov(Osmolality ~ Condition * Treatment, data = wk6.cont)
 summary(wk6.cont.aov) # no significant differences between control mock and control
@@ -686,7 +1024,6 @@ summary(wk6.cont.aov) # no significant differences between control mock and cont
 wk8.cont <- osmo %>% 
   filter(Treatment == "Control" | Treatment == "Control Mock") %>% 
   filter(Week == "Wk_8")
-View(wk8.cont) 
 
 wk8.cont.aov <- aov(Osmolality ~ Condition * Treatment, data = wk8.cont)
 summary(wk8.cont.aov) # no significant differences between control mock and control
@@ -694,10 +1031,9 @@ summary(wk8.cont.aov) # no significant differences between control mock and cont
 # removing Control Mocks
 osmo <- osmo %>% 
   filter(Treatment != "Control Mock")
-View(osmo)
 ```
 
-### Osmolality Summary Statistics
+### Mean, SD, SE
 ```{r}
 osmo$Week[osmo$Week == "WK_8"] <- "Wk_8" # fixing spelling error 
 
@@ -715,7 +1051,120 @@ osmo.errobars <- osmo.errobars + theme_bw() + scale_fill_manual(values=c("indian
 
 osmo.errobars
 ```
+### ANOVAs
+#### Week 0
+```{r Osmolality Week 0}
+# Week 0
+osmo.wk0 <- osmo %>% 
+  filter(Week == "Wk_0")
 
+# density histogram
+ggplot(data = osmo.wk0, aes(x = Osmolality)) + geom_histogram(binwidth = 30, aes(y =..density..), colour = "black", fill = "white") + geom_density(alpha = 0.2, fill = "#FF6666") 
 
+# by water treatment
+osmo.wk0.mu <- osmo.wk0 %>% 
+  group_by(Condition) %>% 
+  summarise(mean = mean(Osmolality, na.rm = TRUE))
 
+ggplot(data = osmo.wk0, aes(x = Osmolality, fill = Condition)) + geom_histogram(binwidth = 30, position = "identity", alpha = 0.5) + geom_vline(data = osmo.wk0.mu, aes(xintercept=mean, color=Condition), linetype="dashed") + scale_color_manual(values=c("indianred3", "cadetblue3")) + theme_classic() + xlab("Osmolality") + ylab("Count") + theme(legend.position = c(0.9, 0.9))
+
+# ANOVA
+osmo.wk0.aov <- aov(Osmolality ~ Condition * Treatment, data = osmo.wk0)
+summary(osmo.wk0.aov)
+
+# testing homogeneity of variances
+plot(osmo.wk0.aov, 1)
+leveneTest(Osmolality ~ Condition*Treatment, data = osmo.wk0) # p > 0.05 means no violation of homogeneity of varaince
+
+# normality test
+plot(osmo.wk0.aov, 2)
+osmo.wk0.residuals <- residuals(object = osmo.wk0.aov)  # p > 0.05 means no violation of homogeneity of varaince
+shapiro.test(x = osmo.wk0.residuals)
+```
+
+#### Week 2
+```{r Osmolality Week 2}
+# Week 2 
+wk2 <- osmo %>% 
+  filter(Week == "Wk_2")
+
+# ANOVA
+wk2.aov <- aov(Osmolality ~ Condition * Treatment, data = wk2)
+summary(wk2.aov)
+```
+
+#### Week 4
+```{r Osmolality Week 4}
+# Week 4
+osmo.wk4 <- osmo %>% 
+  filter(Week == "Wk_4")
+
+# density histogram
+ggplot(data = osmo.wk4, aes(x = Osmolality)) + geom_histogram(binwidth = 52, aes(y =..density..), colour = "black", fill = "white") + geom_density(alpha = 0.2, fill = "#FF6666") 
+
+# by water treatment
+osmo.wk4.mu <- osmo.wk4 %>% 
+  group_by(Condition) %>% 
+  summarise(mean = mean(Osmolality, na.rm = TRUE))
+
+ggplot(data = osmo.wk4, aes(x = Osmolality, fill = Condition)) + geom_histogram(binwidth = 52, position = "identity", alpha = 0.5) + geom_vline(data = osmo.wk4.mu, aes(xintercept=mean, color=Condition), linetype="dashed") + scale_color_manual(values=c("indianred3", "cadetblue3")) + theme_classic() + xlab("Osmolality") + ylab("Count") + theme(legend.position = c(0.9, 0.9))
+osmo.wk4.aov <- aov(Osmolality ~ Condition * Treatment, data = osmo.wk4)
+summary(osmo.wk4.aov) # significant drought, microbial, and interaction term
+TukeyHSD(osmo.wk4.aov)
+
+# ANOVA
+osmo.wk4.aov <- aov(Osmolality ~ Condition * Treatment, data = osmo.wk4)
+summary(osmo.wk4.aov) # significant drought, microbial, and interaction term
+TukeyHSD(osmo.wk4.aov)
+
+# testing homogeneity of variances
+plot(osmo.wk4.aov, 1)
+leveneTest(Osmolality ~ Condition*Treatment, data = osmo.wk4)
+
+# normality test
+plot(osmo.wk4.aov, 2)
+osmo.wk4.residuals <- residuals(object = osmo.wk4.aov)
+shapiro.test(x = osmo.wk4.residuals)
+```
+
+#### Week 6
+```{r Osmolality Week 6}
+# Week 6
+wk6 <- osmo %>% 
+  filter(Week == "Wk_6")
+
+# ANOVA
+wk6.aov <- aov(Osmolality ~ Condition * Treatment, data = wk6)
+summary(wk6.aov) 
+```
+
+#### Week 8
+```{r Osmolality Week 8}
+# Week 8
+osmo.wk8 <- osmo %>% 
+  filter(Week == "Wk_8")
+
+# density histogram
+ggplot(data = osmo.wk8, aes(x = Osmolality)) + geom_histogram(binwidth = 110, aes(y =..density..), colour = "black", fill = "white") + geom_density(alpha = 0.2, fill = "#FF6666") 
+
+# by water treatment
+osmo.wk8.mu <- osmo.wk8 %>% 
+  group_by(Condition) %>% 
+  summarise(mean = mean(Osmolality, na.rm = TRUE))
+
+ggplot(data = osmo.wk8, aes(x = Osmolality, fill = Condition)) + geom_histogram(binwidth = 110, position = "identity", alpha = 0.5) + geom_vline(data = osmo.wk8.mu, aes(xintercept=mean, color=Condition), linetype="dashed") + scale_color_manual(values=c("indianred3", "cadetblue3")) + theme_classic() + xlab("Osmolality") + ylab("Count") + theme(legend.position = c(0.9, 0.9))
+
+# ANOVA
+osmo.wk8.aov <- aov(Osmolality ~ Condition * Treatment, data = osmo.wk8)
+summary(osmo.wk8.aov)
+
+# testing homogeneity of variances
+plot(osmo.wk8.aov, 1)
+leveneTest(Osmolality ~ Condition*Treatment, data = osmo.wk8) # p < 0.05 means violation of homogeneity of varaince
+
+# normality test
+plot(osmo.wk8.aov, 2)
+osmo.wk8.residuals <- residuals(object = osmo.wk8.aov)  # p > 0.05 means no violation of homogeneity of varaince
+shapiro.test(x = osmo.wk8.residuals)
+```
 
