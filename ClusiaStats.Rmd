@@ -10,21 +10,22 @@ output:
     
 ---
 
-# Introduction
-# Methods
 # Packages 
 ```{r}
 library(tidyverse)
 library(plotrix)
 library(car)
 library(ggpubr)
+
+mytheme <- theme_classic(base_size = 12) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 ```
 
 # Biomass Measurements
 ```{r Biomass Dataset}
-biomass <- read.csv("~/Documents/LabStats/Clusia/GrowthMeasurements.csv", header = TRUE, stringsAsFactors = TRUE, na.strings = "NA")
+biomass <- read.csv("~/Documents/Git/clusia_droughtexperiment/GrowthMeasurements.csv", header = TRUE, stringsAsFactors = TRUE, na.strings = "NA")
 biomass <- biomass %>% 
-  arrange(Condition, Treatment, SampleNumber)
+  arrange(Condition, Treatment, SampleNumber) %>% 
+  filter(Treatment != "Control Mock")
 ```
 
 ## Controls
@@ -69,42 +70,180 @@ biomass <- biomass %>%
   filter(Treatment != "Control Mock")
 ```
 
-## Summary Stats
+
+## Summary Stats by Water Treatment
 ```{r}
 biomass.sum <- biomass %>% 
   group_by(Condition) %>% 
-  summarise_at(c("PotWt", "Leaf_FreshWt", "SoilWater", "Total_DryWt", "RootBiomass", "RootShoot", "RMF"), funs(mean, sd, std.error))
-View(biomass.sum)
+  summarise_at(c("ShootBiomass", "Total_DryWt", "RootBiomass", "RootShoot", "RMF"), funs(mean, sd, std.error))
 
+# mean shoot biomass
+mean_shootbiomass <- ggplot(data = biomass.sum, aes(x = Condition, y = ShootBiomass_mean)) + geom_bar(stat = "identity", colour = "black") + geom_errorbar(aes(ymin = ShootBiomass_mean-ShootBiomass_std.error, ymax = ShootBiomass_mean+ShootBiomass_std.error), width = 0.2) + mytheme + ylab("Mean Shoot Biomass (g DW)") + theme(axis.title.x = element_blank())
+
+pdf("mean_shootbiomass_box.pdf")
+plot(mean_shootbiomass)
+dev.off()
+
+# mean root biomass
+mean_rootbiomass <- ggplot(data = biomass.sum, aes(x = Condition, y = RootBiomass_mean)) + geom_bar(stat = "identity", colour = "black") + geom_errorbar(aes(ymin = RootBiomass_mean-RootBiomass_std.error, ymax = RootBiomass_mean+RootBiomass_std.error), width = 0.2) + mytheme + ylab("Mean Root Biomass (g DW)") + theme(axis.title.x = element_blank())
+
+pdf("mean_rootbiomass_box.pdf")
+plot(mean_rootbiomass)
+dev.off()
+
+# mean total dry mass
+mean_totaldrymass <- ggplot(data = biomass.sum, aes(x = Condition, y = Total_DryWt_mean)) + geom_bar(stat = "identity", colour = "black") + geom_errorbar(aes(ymin = Total_DryWt_mean-Total_DryWt_std.error, ymax = Total_DryWt_mean+Total_DryWt_std.error), width = 0.2) + mytheme + ylab("Mean Total Biomass (g DW)") + theme(axis.title.x = element_blank())
+
+pdf("mean_totaldrymass_box.pdf")
+plot(mean_totaldrymass)
+dev.off()
+
+# mean RootShoot
+mean_rootshoot <- ggplot(data = biomass.sum, aes(x = Condition, y = RootShoot_mean)) + geom_bar(stat = "identity", colour = "black") + geom_errorbar(aes(ymin = RootShoot_mean-RootShoot_std.error, ymax = RootShoot_mean+RootShoot_std.error), width = 0.2) + mytheme + ylab("Mean Root:Shoot") + theme(axis.title.x = element_blank())
+
+pdf("mean_rootshoot_box.pdf")
+plot(mean_rootshoot)
+dev.off()
+
+# mean rmf 
+mean_rmf <- ggplot(data = biomass.sum, aes(x = Condition, y = RMF_mean)) + geom_bar(stat = "identity", colour = "black") + geom_errorbar(aes(ymin = RMF_mean-RMF_std.error, ymax = RMF_mean+RMF_std.error), width = 0.2) + mytheme + ylab("Mean RMF") + theme(axis.title.x = element_blank())
+
+pdf("mean_rmf_box.pdf")
+plot(mean_rmf)
+dev.off()
+```
+
+## Summary Stats by Water Tratment x Microbial Treatment
+```{r}
 biomass.sum2 <- biomass %>% 
   group_by(Condition, Treatment) %>% 
-  summarise_at(c("PotWt", "Leaf_FreshWt", "SoilWater", "Total_DryWt", "RootBiomass", "RootShoot", "RMF"), funs(mean, sd, std.error))
+  summarise_at(c("ShootBiomass", "Total_DryWt", "RootBiomass", "RootShoot", "RMF"), funs(mean, sd, std.error))
 View(biomass.sum2)
+
+# mean shoot biomass
+mean_shoot_isolates <- ggplot(data = biomass.sum2, aes(x = Treatment, y = ShootBiomass_mean, fill = Condition)) + geom_bar(stat = "identity", colour = "black", position = position_dodge(0.9)) + geom_errorbar(aes(ymin = ShootBiomass_mean-ShootBiomass_std.error, ymax = ShootBiomass_mean+ShootBiomass_std.error), width = 0.2, position = position_dodge(0.9)) + mytheme + ylab("Mean Shoot Biomass (g DW)") + theme(axis.title.x = element_blank()) + scale_fill_manual(values=c("#FFFFFF", "#CCCCCC"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(legend.position = c(0.13, 0.9)) + theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1)) + scale_x_discrete(limits = c("Control", "Nonfunctional Isolates", "Drought Isolates", "Phosphorus Isolates", "All Isolates"))
+
+pdf("mean_shootisolates_box.pdf")
+plot(mean_shoot_isolates)
+dev.off()
+
+# mean root biomass
+mean_rootisolates <- ggplot(data = biomass.sum2, aes(x = Treatment, y = RootBiomass_mean, fill = Condition)) + geom_bar(stat = "identity", colour = "black", position = position_dodge(0.9)) + geom_errorbar(aes(ymin = RootBiomass_mean-RootBiomass_std.error, ymax = RootBiomass_mean+RootBiomass_std.error), width = 0.2, position = position_dodge(0.9)) + mytheme + ylab("Mean Root Biomass (g DW)") + theme(axis.title.x = element_blank()) + scale_fill_manual(values=c("#FFFFFF", "#CCCCCC"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(legend.position = c(0.13, 0.9)) + theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1)) + scale_x_discrete(limits = c("Control", "Nonfunctional Isolates", "Drought Isolates", "Phosphorus Isolates", "All Isolates"))
+
+pdf("mean_rootisolates_box.pdf")
+plot(mean_rootisolates)
+dev.off()
+
+# mean total dry mass
+mean_totalisolates <- ggplot(data = biomass.sum2, aes(x = Treatment, y = Total_DryWt_mean, fill = Condition)) + geom_bar(stat = "identity", colour = "black", position = position_dodge(0.9)) + geom_errorbar(aes(ymin = Total_DryWt_mean-Total_DryWt_std.error, ymax = Total_DryWt_mean+Total_DryWt_std.error), width = 0.2, position = position_dodge(0.9)) + mytheme + ylab("Mean Total Biomass (g DW)") + theme(axis.title.x = element_blank()) + scale_fill_manual(values=c("#FFFFFF", "#CCCCCC"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(legend.position = c(0.13, 0.9)) + theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1)) + scale_x_discrete(limits = c("Control", "Nonfunctional Isolates", "Drought Isolates", "Phosphorus Isolates", "All Isolates"))
+
+pdf("mean_totalisolates_box.pdf")
+plot(mean_totalisolates)
+dev.off()
+
+# mean root shoot
+mean_rootshoot_isolates <- ggplot(data = biomass.sum2, aes(x = Treatment, y = RootShoot_mean, fill = Condition)) + geom_bar(stat = "identity", colour = "black", position = position_dodge(0.9)) + geom_errorbar(aes(ymin = RootShoot_mean-RootShoot_std.error, ymax = RootShoot_mean+RootShoot_std.error), width = 0.2, position = position_dodge(0.9)) + mytheme + ylab("Mean Root:Shoot") + theme(axis.title.x = element_blank()) + scale_fill_manual(values=c("#FFFFFF", "#CCCCCC"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(legend.position = c(0.13, 0.9)) + theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1)) + scale_x_discrete(limits = c("Control", "Nonfunctional Isolates", "Drought Isolates", "Phosphorus Isolates", "All Isolates"))
+
+pdf("mean_rootshootisolates.pdf")
+plot(mean_rootshoot_isolates)
+dev.off()
+
+# mean rmf
+mean_rmfisolates <- ggplot(data = biomass.sum2, aes(x = Treatment, y = RMF_mean, fill = Condition)) + geom_bar(stat = "identity", colour = "black", position = position_dodge(0.9)) + geom_errorbar(aes(ymin = RMF_mean-RMF_std.error, ymax = RMF_mean+RMF_std.error), width = 0.2, position = position_dodge(0.9)) + mytheme + ylab("Mean RMF") + theme(axis.title.x = element_blank()) + scale_fill_manual(values=c("#FFFFFF", "#CCCCCC"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1)) + scale_x_discrete(limits = c("Control", "Nonfunctional Isolates", "Drought Isolates", "Phosphorus Isolates", "All Isolates"))
+
+pdf("mean_rmfisolates.pdf")
+plot(mean_rmfisolates)
+dev.off()
+
 ```
 
 ## Boxplots
+### Shoot Biomass
+```{r}
+# condition
+cond.shoot <- ggplot(data = biomass, aes(x = Condition, y = ShootBiomass)) + geom_boxplot() + mytheme + scale_fill_manual(values=c("#FFFFFF", "#CCCCCC"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + ylab("Biomass (g DW)") + theme(axis.title.x = element_blank()) + scale_y_continuous(limits = c(0, 50))
+
+pdf("cond_shoot.pdf")
+plot(cond.shoot)
+dev.off()
+
+# condition x treatment
+cond.treat.shoot <- ggplot(data = biomass, aes(x = Treatment, y = ShootBiomass, fill = Condition)) + geom_boxplot() + mytheme + scale_fill_manual(values=c("#FFFFFF", "#CCCCCC"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(legend.position = c(0.13, 0.85)) + ylab("Shoot Biomass (g DW)") + xlab("Constructed Community") + scale_x_discrete(limits = c("Control", "Nonfunctional Isolates", "Drought Isolates", "Phosphorus Isolates", "All Isolates")) + theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1)) + scale_y_continuous(limits = c(0, 50))
+
+pdf("cond_treat_shoot.pdf")
+plot(cond.treat.shoot)
+dev.off()
+```
+
 ### Total Biomass
 ```{r}
-mytheme <- theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+# condition
+cond_totalbiomass <- ggplot(data = biomass, aes(x = Condition, y = Total_DryWt)) + geom_boxplot() + mytheme + scale_fill_manual(values=c("#FFFFFF", "#CCCCCC"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + ylab("Biomass (g DW)") + scale_y_continuous(limits = c(0, 200)) + theme(axis.title.x = element_blank())
 
-ggplot(data = biomass, aes(x = Treatment, y = Total_DryWt, fill = Condition)) + geom_boxplot() + mytheme + scale_fill_manual(values=c("indianred3", "cadetblue3"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(legend.position = c(0.1, 0.85)) + ylab("Biomass (g DW)") + xlab("Constructed Community") + scale_x_discrete(limits = c("Control", "Nonfunctional Isolates", "Drought Isolates", "Phosphorus Isolates", "All Isolates"))
+pdf("cond_totalbiomas.pdf")
+plot(cond_totalbiomass)
+dev.off()
+
+# condition x treatment
+cond_treat_totalbiomass <- ggplot(data = biomass, aes(x = Treatment, y = Total_DryWt, fill = Condition)) + geom_boxplot() + mytheme + scale_fill_manual(values=c("#FFFFFF", "#CCCCCC"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(legend.position = c(0.13, 0.85)) + ylab("Biomass (g DW)") + xlab("Constructed Community") + scale_x_discrete(limits = c("Control", "Nonfunctional Isolates", "Drought Isolates", "Phosphorus Isolates", "All Isolates")) + theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1)) + scale_y_continuous(limits = c(0, 200))
+
+pdf("cond_treat_totalbiomass.pdf")
+plot(cond_treat_totalbiomass)
+dev.off()
 ```
 
 ### Root biomass
 ```{r}
-ggplot(data = biomass, aes(x = Treatment, y = RootBiomass, fill = Condition)) + geom_boxplot() + mytheme + scale_fill_manual(values=c("indianred3", "cadetblue3"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(legend.position = c(0.1, 0.85)) + ylab("Root Biomass (g DW)") + xlab("Constructed Community") + scale_x_discrete(limits = c("Control", "Nonfunctional Isolates", "Drought Isolates", "Phosphorus Isolates", "All Isolates"))
+# condition
+cond_root <- ggplot(data = biomass, aes(x = Condition, y = RootBiomass)) + geom_boxplot() + mytheme + scale_fill_manual(values=c("#FFFFFF", "#CCCCCC"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + ylab("Root Biomass (g DW)") + scale_y_continuous(limits = c(0, 200)) + theme(axis.title.x = element_blank())
+
+pdf("cond_root.pdf")
+plot(cond_root)
+dev.off()
+
+# condition x treatment
+cond_treat_root <- ggplot(data = biomass, aes(x = Treatment, y = RootBiomass, fill = Condition)) + geom_boxplot() + mytheme + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + scale_fill_manual(values=c("#FFFFFF", "#CCCCCC"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(legend.position = c(0.13, 0.85)) + ylab("Root Biomass (g DW)") + xlab("Constructed Community") + scale_x_discrete(limits = c("Control", "Nonfunctional Isolates", "Drought Isolates", "Phosphorus Isolates", "All Isolates")) + scale_y_continuous(limits = c(0, 200)) + theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
+
+pdf("cond_treat_root")
+plot(cond_treat_root)
+dev.off()
+
 ```
 
 Possible trend in both total biomass and root biomass is that both Drought and Phosphorus communities have consistently higher means than the control, nonfunctional isolates, and all isolates plants. Although not statistically significant, they suggest that there may be an advantage to the plants to have specifically these specialized constructed communities during drought conditions. 
 
 ### Root:Shoot
 ```{r}
-ggplot(data = biomass, aes(x = Treatment, y = RootShoot, fill = Condition)) + geom_boxplot() + mytheme + scale_fill_manual(values=c("indianred3", "cadetblue3"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(legend.position = c(0.1, 0.85)) + ylab("Root : Shoot") + xlab("Constructed Community") + scale_x_discrete(limits = c("Control", "Nonfunctional Isolates", "Drought Isolates", "Phosphorus Isolates", "All Isolates"))
+# condition
+cond_rootshoot <- ggplot(data = biomass, aes(x = Condition, y = RootShoot)) + geom_boxplot() + mytheme + scale_fill_manual(values=c("#FFFFFF", "#CCCCCC"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + ylab("Root:Shoot") + scale_y_continuous(limits = c(0, 20)) + theme(axis.title.x = element_blank())
+
+pdf("cond_rootshoot.pdf")
+plot(cond_rootshoot)
+dev.off()
+
+# condition x treatment
+cond_treat_rootshoot <- ggplot(data = biomass, aes(x = Treatment, y = RootShoot, fill = Condition)) + geom_boxplot() + mytheme + scale_fill_manual(values=c("#FFFFFF", "#CCCCCC"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(legend.position = c(0.13, 0.85)) + ylab("Root : Shoot") + xlab("Constructed Community") + scale_x_discrete(limits = c("Control", "Nonfunctional Isolates", "Drought Isolates", "Phosphorus Isolates", "All Isolates")) + theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
+
+pdf("cond_treat_rootshoot.pdf")
+plot(cond_treat_rootshoot)
+dev.off()
 ```
 
 ### Root Mass Fraction
 ```{r}
-ggplot(data = biomass, aes(x = Treatment, y = RMF, fill = Condition)) + geom_boxplot() + mytheme + scale_fill_manual(values=c("indianred3", "cadetblue3"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(legend.position = c(0.1, 0.85)) + ylab("Root Mass Fraction") + xlab("Constructed Community") + scale_x_discrete(limits = c("Control", "Nonfunctional Isolates", "Drought Isolates", "Phosphorus Isolates", "All Isolates"))
+# condition
+cond_rmf <- ggplot(data = biomass, aes(x = Condition, y = RMF)) + geom_boxplot() + mytheme + scale_fill_manual(values=c("#FFFFFF", "#CCCCCC"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + ylab("RMF") + scale_y_continuous(limits = c(0.0, 1.0)) + theme(axis.title.x = element_blank())
+
+pdf("cond_rmf.pdf")
+plot(cond_rmf)
+dev.off()
+
+# condition x treatment
+cond_treat_rmf <- ggplot(data = biomass, aes(x = Treatment, y = RMF, fill = Condition)) + geom_boxplot() + mytheme + scale_fill_manual(values=c("#FFFFFF", "#CCCCCC"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(legend.position = c(0.13, 0.2)) + ylab("Root Mass Fraction") + xlab("Constructed Community") + scale_x_discrete(limits = c("Control", "Nonfunctional Isolates", "Drought Isolates", "Phosphorus Isolates", "All Isolates")) + theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1)) + scale_y_continuous(limits = c(0.0, 1.0))
+
+pdf("cond_treat_rmf.pdf")
+plot(cond_treat_rmf)
+dev.off()
 ```
 
 ## ANOVAs
@@ -146,10 +285,10 @@ plot(totaldrywt.aov, 1)
 leveneTest(Total_DryWt ~ Condition*Treatment, data = biomass) 
 
 # testing normality
-plot(totaldrywt.aov, 2)
+plot(totaldrywt.aov, 2
+     )
 totaldrywt.residuals <- residuals(object = totaldrywt.aov)
 shapiro.test(x = totaldrywt.residuals) 
-
 ```
 
 ```{r Total Dry Mass Normality & Outliers}
@@ -304,8 +443,7 @@ Note: Root mass fraction = mass of fine root (g) / total biomass (g)
 # Physiology Measurements
 ##  Malic Acid Titrations
 ```{r Malic Acid Data}
-library(tidyverse)
-clusia.malic <- read.csv("~/Documents/LabStats/Clusia/MalicAcid.csv", header = TRUE , sep = ",", stringsAsFactors = TRUE, na.strings = "na")
+clusia.malic <- read.csv("~/Documents/Git/clusia_droughtexperiment/MalicAcid.csv", header = TRUE , sep = ",", stringsAsFactors = TRUE, na.strings = "na")
 ```
 
 ### Malic Acid Controls
@@ -364,22 +502,60 @@ clusia.malic$Treatment[clusia.malic$Treatment == "Null_Isolates"] <- "Nonfunctio
 clusia.malic$Treatment[clusia.malic$Treatment == "All_Isolates"] <- "All Isolates"
 clusia.malic$Treatment[clusia.malic$Treatment == "Drought_Isolates"] <- "Drought Isolates"
 clusia.malic$Treatment[clusia.malic$Treatment == "Phosphorus_Isolates"] <- "Phosphorus Isolates"
+clusia.malic$Treatment[clusia.malic$Treatment == "Drought"] <- "Drought Isolates"
 
 # arranging by Week, Water, and Treatment
 clusia.malic <- clusia.malic %>% 
   arrange(Week, Condition, Treatment)
+View(clusia.malic)
 ```
 
 
 ### Mean, SD, Std.Error
 ```{r}
+# subsetting to Wk 0 ,4, 8
+clusia.malic <- clusia.malic %>% 
+  filter(Week == "Wk_0" | Week == "Wk_4" | Week == "Wk_8")
+
+cond_malic <- ggplot(data = clusia.malic, aes(x = Condition, y = MalicAverage)) + geom_boxplot() + facet_grid(. ~ Week)+ mytheme + ylab(" Malic Acid") + theme(axis.title.x = element_blank()) + theme(axis.text.x = element_text(angle = 90))
+
+pdf("cond_malic.pdf")
+plot(cond_malic)
+dev.off()
+
+cond_treat_malic <- ggplot(data = clusia.malic, aes(x = Treatment, y = MalicAverage, fill = Condition)) + geom_boxplot() + facet_grid(. ~ Week)+ mytheme + ylab(" Malic Acid") + theme(axis.title.x = element_blank()) + mytheme + scale_fill_manual(values=c("#FFFFFF", "#CCCCCC"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(axis.text.x = element_text(angle = 90)) + xlab("Constructed Community")
+
+pdf("cond_treat_malic.pdf")
+plot(cond_treat_malic)
+dev.off()
+
+# mean
 malic.sum <- clusia.malic %>% 
+  group_by(Week, Condition) %>% 
+  summarise(n = n(),
+            mean_malic = mean(MalicAverage, na.rm = TRUE),
+            sd_malic = sd(MalicAverage, na.rm = TRUE),
+            se = sd(MalicAverage, na.rm = TRUE)/sqrt(n()))
+
+mean_malic <- ggplot(data = malic.sum, aes(x = Condition, y = mean_malic, fill = Week)) + geom_bar(stat = "identity", position = position_dodge(0.9)) + geom_errorbar(aes(ymin = mean_malic-se, ymax = mean_malic+se), width=0.2, position = position_dodge(0.9)) + mytheme + ylab("Mean Malic Acid") + theme(axis.title.x = element_blank()) + scale_fill_manual(values = wes_palette(n = 5, name = "Royal2"))
+
+pdf("mean_malic.pdf")
+plot(mean_malic)
+dev.off()
+
+malic.sum2 <- clusia.malic %>% 
   group_by(Week, Condition, Treatment) %>% 
   summarise(n = n(),
             mean_malic = mean(MalicAverage, na.rm = TRUE),
             sd_malic = sd(MalicAverage, na.rm = TRUE),
             se = sd(MalicAverage, na.rm = TRUE)/sqrt(n()))
-View(malic.sum)
+
+mean_malic2 <- ggplot(data = malic.sum2, aes(x = Treatment, y = mean_malic, fill = Condition)) + geom_bar(stat = "identity", position = position_dodge(0.9), colour = "black") + geom_errorbar(aes(ymin = mean_malic-se, ymax = mean_malic+se), width=0.2, position = position_dodge(0.9)) + facet_grid(. ~ Week) + mytheme + ylab("Mean Malic Acid") + xlab("Constructed Community") + scale_fill_manual(values=c("#FFFFFF", "#CCCCCC"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 1))
+
+pdf("mean_malic2.pdf")
+plot(mean_malic2)
+dev.off()
+
 ```
 
 ### Malic Acid ANOVAs
@@ -593,7 +769,6 @@ summary(lipid.control8.aov) # not sigificant between autoclaved and inoculated c
 clusia.lipid <- clusia.lipid %>% 
   filter(Treatment != "Control Mock")
 
-
 # arranging by Week, Water, and Treatment
 clusia.lipid <- clusia.lipid %>% 
   arrange(Week, Condition, Treatment)
@@ -601,20 +776,47 @@ clusia.lipid <- clusia.lipid %>%
 
 ### Mean, SD, Std. Error
 ```{r}
+# selecting Week 0 , 4, 8
+clusia.lipid <- clusia.lipid %>% 
+  filter(Week == "Wk_0" | Week == "Wk_4" | Week == "Wk_8")
+
+cond.lipid <- ggplot(data = clusia.lipid, aes(x = Condition, y = LipidPerox)) + geom_boxplot() + facet_grid(.~Week) + mytheme + theme(axis.title.x = element_blank()) + ylab("Lipid Peroxidation") + scale_y_continuous(limits = c(0, 200))
+
+pdf("cond_lipid.pdf")
+plot(cond.lipid)
+dev.off()
+
+cond.treat.lipid <- ggplot(data = clusia.lipid, aes(x = Treatment, y = LipidPerox, fill = Condition)) + geom_boxplot() + facet_grid(.~Week) + mytheme + theme(axis.title.x = element_blank()) + ylab("Lipid Peroxidation") + scale_y_continuous(limits = c(0, 200)) + theme(axis.text.x = element_text(angle = 90)) + scale_fill_manual(values=c("#FFFFFF", "#CCCCCC"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought"))
+
+pdf("cond_treat_lipid.pdf")
+plot(cond.treat.lipid)
+dev.off()
 
 lipid.sum <- clusia.lipid %>% 
+  group_by(Week, Condition) %>% 
+  summarise(n = n(),
+            mean_lipid = mean(LipidPerox, na.rm = TRUE),
+            sd_lipid = sd(LipidPerox, na.rm = TRUE),
+            se = sd(LipidPerox, na.rm = TRUE)/sqrt(n()))
+
+mean_lipid <- ggplot(data = lipid.sum , aes(x = Condition, y = mean_lipid)) + geom_bar(stat = "identity", position = position_dodge(0.9)) + geom_errorbar(aes(ymin = mean_lipid-se, ymax =mean_lipid+se), width=0.2, position = position_dodge(0.9)) + facet_grid(. ~ Week) + mytheme + ylab("Mean Lipid Peroxidation") + theme(axis.title.x = element_blank()) 
+
+pdf("mean_lipid.pdf")
+plot(mean_lipid)
+dev.off()
+
+lipid.sum2 <- clusia.lipid %>% 
   group_by(Week, Condition, Treatment) %>% 
   summarise(n = n(),
             mean_lipid = mean(LipidPerox, na.rm = TRUE),
             sd_lipid = sd(LipidPerox, na.rm = TRUE),
             se = sd(LipidPerox, na.rm = TRUE)/sqrt(n()))
-View(lipid.sum)
 
-lipid.errobars <- ggplot(data = lipid.sum, aes(x = Treatment, y = mean_lipid, fill = Condition)) + geom_bar(stat = "identity", color = "black", position = position_dodge(0.9)) + geom_errorbar(aes(ymin = mean_lipid-sd_lipid, ymax = mean_lipid+sd_lipid), width = 0.2, position = position_dodge(0.9)) + facet_grid(. ~ Week)
+mean_lipid2 <- ggplot(data = lipid.sum2, aes(x = Treatment, y = mean_lipid, fill = Condition)) + geom_bar(stat = "identity", position = position_dodge(0.9), colour = "black") + geom_errorbar(aes(ymin = mean_lipid-se, ymax =mean_lipid+se), width=0.2, position = position_dodge(0.9)) + facet_grid(. ~ Week) + mytheme + ylab("Mean Lipid Peroxidation") + theme(axis.title.x = element_blank()) + scale_y_continuous(limits = c(0, 200)) + theme(axis.text.x = element_text(angle = 90)) + scale_fill_manual(values=c("#FFFFFF", "#CCCCCC"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought"))
 
-lipid.errobars <- lipid.errobars + theme_bw() + scale_fill_manual(values=c("indianred3", "cadetblue3"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + theme(axis.title.x = element_blank()) + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) + theme(legend.position = c(0.1, 0.8)) + ylab(expression(Mean~Lipid~Peroxidation~(nmol~MDA~g^{-1})))
-
-lipid.errobars
+pdf("mean_lipid2.pdf")
+plot(mean_lipid2)
+dev.off()
 ```
 
 ### Lipid Peroxidation ANOVAs
@@ -824,29 +1026,59 @@ proline.control8.aov <- aov(Proline ~ Condition * Treatment, data = wk8.controls
 summary(proline.control8.aov) # significant drought effect
 
 # removing Control Mock & fixing 'Null isolates'
-clusia.lipid <- clusia.lipid %>% 
+clusia.proline <- clusia.proline %>% 
   filter(Treatment != "Control Mock")
 
 # arranging by Week, Water, and Treatment
-clusia.lipid <- clusia.lipid %>% 
+clusia.proline <- clusia.proline %>% 
   arrange(Week, Condition, Treatment)
+View(clusia.proline)
 ```
 
 ### Mean, SD, Std. Error
 ```{r}
+clusia.proline <- clusia.proline %>% 
+  filter(Week == "Wk_0" | Week == "Wk_4" | Week == "Wk_8")
+
+cond.proline <- ggplot(data = clusia.proline, aes(x = Condition, y = Proline)) + geom_boxplot() + facet_grid(. ~ Week) + mytheme + theme(axis.title.x = element_blank()) + scale_y_continuous(limits = c(0, 50)) 
+
+pdf("cond_proline.pdf")
+plot(cond.proline)
+dev.off()
+
+cond.treat.proline <- ggplot(data = clusia.proline, aes(x = Treatment, y = Proline, fill = Condition)) + geom_boxplot() + facet_grid(. ~ Week) + mytheme + theme(axis.title.x = element_blank()) + scale_y_continuous(limits = c(0, 50)) + theme(axis.text.x = element_text(angle = 90)) + scale_fill_manual(values=c("#FFFFFF", "#CCCCCC"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought"))
+
+pdf("cond_treat_proline.pdf")
+plot(cond.treat.proline)
+dev.off()
+
 proline.sum <- clusia.proline %>% 
-  group_by(Week, Condition, Treatment) %>% 
+  group_by(Week, Condition) %>% 
   summarise(n = n(),
             mean_proline = mean(Proline, na.rm = TRUE),
             sd_proline = sd(Proline, na.rm = TRUE),
             se = sd(Proline, na.rm = TRUE)/sqrt(n()))
 View(proline.sum)
 
-proline.errobars <- ggplot(data = proline.sum, aes(x = Treatment, y = mean_proline, fill = Condition)) + geom_bar(stat = "identity", color = "black", position = position_dodge(0.9)) + geom_errorbar(aes(ymin = mean_proline-sd_proline, ymax = mean_proline+sd_proline), width = 0.2, position = position_dodge(0.9)) + facet_grid(. ~ Week)
+mean_proline <- ggplot(data = proline.sum, aes(x = Condition, y = mean_proline)) + geom_bar(stat = "identity", color = "black", position = position_dodge(0.9)) + geom_errorbar(aes(ymin = mean_proline-sd_proline, ymax = mean_proline+sd_proline), width = 0.2, position = position_dodge(0.9)) + facet_grid(. ~ Week) + mytheme + theme(axis.title.x = element_blank()) + ylab("Mean Proline")
 
-proline.errobars <- proline.errobars + theme_bw() + scale_fill_manual(values=c("indianred3", "cadetblue3"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + theme(axis.title.x = element_blank()) + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) + theme(legend.position = c(0.09, 0.85)) + ylab(expression(Mean~Proline~Concentration(mu~moles~g^{-1})))
+pdf("mean_proline.pdf")
+plot(mean_proline)
+dev.off()
 
-proline.errobars
+proline.sum2 <- clusia.proline %>% 
+  group_by(Week, Condition, Treatment) %>% 
+  summarise(n = n(),
+            mean_proline = mean(Proline, na.rm = TRUE),
+            sd_proline = sd(Proline, na.rm = TRUE),
+            se = sd(Proline, na.rm = TRUE)/sqrt(n()))
+View(proline.sum2)
+
+mean_proline2 <- ggplot(data = proline.sum2, aes(x = Treatment, y = mean_proline, fill = Condition)) + geom_bar(stat = "identity", color = "black", position = position_dodge(0.9)) + geom_errorbar(aes(ymin = mean_proline-sd_proline, ymax = mean_proline+sd_proline), width = 0.2, position = position_dodge(0.9)) + facet_grid(. ~ Week) + mytheme + theme(axis.title.x = element_blank()) + ylab("Mean Proline") + scale_fill_manual(values=c("#FFFFFF", "#CCCCCC"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + scale_y_continuous(limits = c(0, 50)) + theme(axis.text.x = element_text(angle = 90)) 
+
+pdf("mean_proline2.pdf")
+plot(mean_proline2)
+dev.off()
 ```
 
 ### Proline ANOVAs
@@ -979,7 +1211,7 @@ Water is predominantly the determinant of proline concentration, though not unti
 
 ## Osmolality
 ```{r Dataset}
-osmo <- read.csv("~/Documents/LabStats/Clusia/Osmolality.csv", header = TRUE, stringsAsFactors = TRUE)
+osmo <- read.csv("~/Documents/Git/clusia_droughtexperiment/Osmolality.csv", header = TRUE, stringsAsFactors = TRUE)
 osmo <- osmo %>% 
   arrange(Week, Condition, Treatment)
 ```
@@ -991,7 +1223,6 @@ osmo <- osmo %>%
 wk0.cont <- osmo %>% 
   filter(Treatment == "Control" | Treatment == "Control Mock") %>% 
   filter(Week == "Wk_0")
-
 
 wk0.cont.aov <- aov(Osmolality ~ Condition * Treatment, data = wk0.cont)
 summary(wk0.cont.aov) # no significant differences between control mock and control
@@ -1035,21 +1266,44 @@ osmo <- osmo %>%
 
 ### Mean, SD, SE
 ```{r}
-osmo$Week[osmo$Week == "WK_8"] <- "Wk_8" # fixing spelling error 
+osmo$Week[osmo$Week == "WK_8"] <- "Wk_8" # fixing error
 
+# filtering out certain weeks
+osmo <- osmo %>% 
+  filter(Week == "Wk_0" | Week == "Wk_4" | Week == "Wk_8")
+View(osmo)
+
+ggplot(data = osmo, aes(x = Condition, y = Osmolality)) + geom_boxplot() + facet_grid(. ~ Week) + mytheme + theme(axis.title.x = element_blank()) + scale_y_continuous(limits = c(0, 800))
+
+# mean
 osmo.sum <- osmo %>% 
-  group_by(Week, Condition, Treatment) %>% 
+  group_by(Week, Condition) %>% 
   summarise(n = n(),
             mean = mean(Osmolality, na.rm = TRUE),
             sd = sd(Osmolality, na.rm = TRUE),
             se = sd(Osmolality, na.rm = TRUE)/sqrt(n()))
 View(osmo.sum)
 
-osmo.errobars <- ggplot(data = osmo.sum, aes(x = Treatment, y = mean, fill = Condition)) + geom_bar(stat = "identity", color = "black", position = position_dodge(0.9)) + geom_errorbar(aes(ymin = mean-sd, ymax = mean+sd), width = 0.2, position = position_dodge(0.9)) + facet_grid(. ~ Week)
+mean_osmo <- ggplot(data = osmo.sum, aes(x = Condition, y = mean)) + geom_bar(stat = "identity", colour = "black", position = position_dodge(0.9)) + facet_grid(.~Week) + geom_errorbar(aes(ymin = mean-se, ymax = mean+se), width = 0.2, position = position_dodge(0.9)) + mytheme + theme(axis.title.x = element_blank()) + ylab("Mean Osmolality")
 
-osmo.errobars <- osmo.errobars + theme_bw() + scale_fill_manual(values=c("indianred3", "cadetblue3"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + theme(axis.title.x = element_blank()) + theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) + ylab(expression(Mean~Osmolality))
+pdf("mean_osmo.pdf")
+plot(mean_osmo)
+dev.off()
 
-osmo.errobars
+osmo.sum2 <- osmo %>% 
+  group_by(Week, Condition, Treatment) %>% 
+  summarise(n = n(),
+            mean = mean(Osmolality, na.rm = TRUE),
+            sd = sd(Osmolality, na.rm = TRUE),
+            se = sd(Osmolality, na.rm = TRUE)/sqrt(n()))
+View(osmo.sum2)
+
+mean.osmo2 <- ggplot(data = osmo.sum2, aes(x = Treatment, y = mean, fill = Condition)) + geom_bar(stat = "identity", color = "black", position = position_dodge(0.9)) + geom_errorbar(aes(ymin = mean-se, ymax = mean+se), width = 0.2, position = position_dodge(0.9)) + facet_grid(. ~ Week) + mytheme +  scale_fill_manual(values=c("#FFFFFF", "#CCCCCC"), breaks=c("Well-watered", "Drought"),labels=c("Well-watered", "Drought")) + theme(axis.text.x = element_text(angle = 90)) + xlab("Constructed Community") + ylab("Mean Osmolality")
+
+pdf("mean_osmo2.pdf")
+plot(mean.osmo2)
+dev.off()
+
 ```
 ### ANOVAs
 #### Week 0
